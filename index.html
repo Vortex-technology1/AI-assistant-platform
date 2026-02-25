@@ -447,7 +447,7 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const auth=firebase.auth(),db=firebase.firestore();
 let currentUser=null,isAdmin=false,currentAssistant=null,chatHistory={},openaiKey='',assistantsData=[];
 // ── Cloud Function URL (replace YOUR-PROJECT-ID after deploy) ──
-const CHAT_FUNCTION_URL='https://europe-west1-ai-assistant-platform-e77ee.cloudfunctions.net/chat';
+const CHAT_FUNCTION_URL='https://chat-342266457067.europe-west1.run.app';
 
 const DEFAULT_ASSISTANTS=[
 {name:"Генератор розпоряджень",icon:"clipboard",description:"Генерує чіткі розпорядження за 30 секунд. Підлеглі перестануть перепитувати",tag:"Управління",model:"gpt-5.2",prompt:"Ти — AI-асистент TALKO System 'Генератор чітких розпоряджень'. Твоя задача — перетворювати нечіткі побажання керівника у структуроване розпорядження.\n\nФОРМАТ РОЗПОРЯДЖЕННЯ:\n1. ЗАДАЧА: (що конкретно зробити — одне речення)\n2. РЕЗУЛЬТАТ: (що має бути на виході — вимірюваний продукт)\n3. ДЕДЛАЙН: (конкретна дата та час)\n4. ВІДПОВІДАЛЬНИЙ: (хто виконує)\n5. РЕСУРСИ: (що потрібно для виконання)\n6. КОНТРОЛЬНЕ ПИТАННЯ: (як перевірити що зроблено правильно)\n7. ЩО РОБИТИ ЯКЩО: (якщо виникне проблема — до кого звертатись)\n\nПРАВИЛА:\n- Завжди перепитуй якщо не вистачає інформації\n- Використовуй конкретні дієслова: 'підготувати', 'надіслати', 'зібрати'\n- Результат завжди вимірюваний: документ, файл, звіт, список\n- Якщо керівник каже розмито — запропонуй 2-3 варіанти конкретизації\n- Відповідай мовою користувача",welcome:"Опишіть задачу — я сформую чітке розпорядження за 30 секунд.",order:0},
