@@ -262,8 +262,27 @@ try{await db.collection('config').doc('openai').set({apiKey:k});openaiKey=k;docu
 });
 
 // ===== ASSISTANTS =====
+const SEED_VERSION='v3';
 async function loadAssistants(){
-try{const s=await db.collection('assistants').orderBy('order').get();
+try{
+// Check if we need to reseed
+let needReseed=false;
+try{const vDoc=await db.collection('config').doc('seed_version').get();
+if(!vDoc.exists||vDoc.data().version!==SEED_VERSION)needReseed=true;
+}catch(e){needReseed=true}
+
+if(needReseed&&isAdmin){
+// Delete all existing assistants
+const old=await db.collection('assistants').get();
+const batch=db.batch();
+old.docs.forEach(d=>batch.delete(d.ref));
+await batch.commit();
+// Seed new defaults
+for(const a of DEFAULT_ASSISTANTS)await db.collection('assistants').add(a);
+await db.collection('config').doc('seed_version').set({version:SEED_VERSION});
+}
+
+const s=await db.collection('assistants').orderBy('order').get();
 if(s.empty){for(const a of DEFAULT_ASSISTANTS)await db.collection('assistants').add(a);return loadAssistants()}
 assistantsData=s.docs.map(d=>({id:d.id,...d.data()}));renderAssistants();if(isAdmin)renderAdminList();
 }catch(e){console.error('Error:',e)}
@@ -309,7 +328,7 @@ const m=document.getElementById('chat-messages'),w=m.querySelector('.chat-welcom
 const d=document.createElement('div');d.className=`message ${role==='user'?'user':'assistant'}`;
 if(!animate)d.style.animation='none';
 const t=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
-let h=escapeHtml(content);h=h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+let h=escapeHtml(content);h=h.replace(/\n/g,'<br>');h=h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
 h=h.replace(/`([^`]+)`/g,'<code style="background:rgba(34,197,94,0.1);padding:2px 6px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:12px">$1</code>');
 d.innerHTML=`<div class="message-bubble">${h}</div><div class="message-time">${t}</div>`;
 m.appendChild(d);scrollToBottom();
@@ -320,6 +339,7 @@ function showTyping(s){const e=document.getElementById('typing-indicator');e.cla
 
 async function sendMessage(){
 const input=document.getElementById('chat-input'),text=input.value.trim();if(!text||!currentAssistant)return;
+if(!openaiKey){appendMessage('assistant','⚠️ API ключ не налаштований. Зверніться до адміністратора.');return}
 input.value='';input.style.height='auto';appendMessage('user',text);
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
 chatHistory[currentAssistant.id].push({role:'user',content:text});
@@ -330,7 +350,7 @@ const inputMsgs=[
 {role:'developer',content:currentAssistant.prompt||'Ти — AI-асистент.'},
 ...chatHistory[currentAssistant.id].map(m=>({role:m.role,content:m.content}))
 ];
-const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},body:JSON.stringify({model:currentAssistant.model||'gpt-5.2',input:inputMsgs,tools:[{type:'web_search_preview'}],reasoning:{effort:'none'},temperature:0.7})});
+const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},body:JSON.stringify({model:currentAssistant.model||'gpt-5.2',input:inputMsgs,tools:[{type:'web_search_preview'}],reasoning:{effort:'none'}})});
 if(!r.ok){const err=await r.text();throw new Error(err)}
 const data=await r.json();
 // Extract text from output items
@@ -338,7 +358,7 @@ let reply='';
 if(data.output){for(const item of data.output){if(item.type==='message'&&item.content){for(const c of item.content){if(c.type==='output_text')reply+=c.text}}}}
 if(!reply)reply=data.error?.message||'Немає відповіді.';
 chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
-}catch(e){showTyping(false);appendMessage('assistant','Помилка з\'єднання. Перевірте API ключ.');console.error(e)}
+}catch(e){showTyping(false);chatHistory[currentAssistant.id].pop();appendMessage('assistant','❌ Помилка. Перевірте API ключ або спробуйте ще раз.');console.error(e)}
 document.getElementById('chat-send').disabled=false;input.focus();
 }
 document.getElementById('chat-send').addEventListener('click',sendMessage);
@@ -370,7 +390,7 @@ document.getElementById('admin-list').innerHTML=assistantsData.map(a=>`
 <div id="ef-${a.id}" style="display:none">
 <div class="form-group"><label>Назва</label><input id="en-${a.id}" value="${esc(a.name)}"></div>
 <div class="form-group"><label>Іконка</label>${renderIconSelector(a.icon||'bolt','ei-'+a.id)}</div>
-<div class="admin-item-row"><div class="form-group"><label>Тег</label><input id="et-${a.id}" value="${esc(a.tag||'')}"></div><div class="form-group"><label>Модель</label><input id="em-${a.id}" value="${a.model||'gpt-5.2'}"></div></div>
+<div class="admin-item-row"><div class="form-group"><label>Тег</label><input id="et-${a.id}" value="${esc(a.tag||'')}"></div><div class="form-group"><label>Модель</label><input id="em-${a.id}" value="${esc(a.model||'gpt-5.2')}"></div></div>
 <div class="form-group"><label>Опис</label><input id="ed-${a.id}" value="${esc(a.description||'')}"></div>
 <div class="form-group"><label>Привітання</label><input id="ew-${a.id}" value="${esc(a.welcome||'')}"></div>
 <div class="form-group"><label>Системний промпт</label><textarea id="ep-${a.id}" rows="6">${esc(a.prompt||'')}</textarea></div>
@@ -379,7 +399,7 @@ document.getElementById('admin-list').innerHTML=assistantsData.map(a=>`
 </div></div>`).join('');
 }
 
-function esc(s){return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'&#10;')}
 window.toggleEdit=function(id){const f=document.getElementById('ef-'+id);f.style.display=f.style.display==='none'?'':'none'};
 window.saveA=async function(id){
 const d={name:document.getElementById('en-'+id).value,icon:document.getElementById('ei-'+id).value,tag:document.getElementById('et-'+id).value,model:document.getElementById('em-'+id).value,description:document.getElementById('ed-'+id).value,welcome:document.getElementById('ew-'+id).value,prompt:document.getElementById('ep-'+id).value,order:parseInt(document.getElementById('eo-'+id).value)||0};
