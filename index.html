@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TALKO AI Assistants</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#22c55e;--primary-dark:#16a34a;--primary-glow:rgba(34,197,94,0.15);--red:#ef4444;--bg-dark:#0a0f0a;--bg-card:#111811;--bg-input:#1a231a;--text-primary:#e8f5e8;--text-secondary:#8aab8a;--text-muted:#5a755a;--border:#1e2e1e;--border-light:#2a3d2a;--radius:16px;--radius-sm:10px;--radius-xs:6px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg-dark);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.3)}50%{box-shadow:0 0 20px 4px rgba(34,197,94,0.15)}}
+@keyframes typing-dot{0%,60%,100%{opacity:0.3;transform:scale(0.8)}30%{opacity:1;transform:scale(1)}}
+.screen{display:none;min-height:100vh}.screen.active{display:flex}
+#login-screen{align-items:center;justify-content:center;background:radial-gradient(ellipse at 20% 50%,rgba(34,197,94,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(34,197,94,0.04) 0%,transparent 50%),var(--bg-dark)}
+.login-container{width:100%;max-width:420px;padding:24px;animation:slideUp .6s ease}
+.login-logo{text-align:center;margin-bottom:40px}
+.login-logo .logo-icon{width:64px;height:64px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:pulse-green 3s ease infinite}
+.login-logo .logo-icon svg{width:32px;height:32px}
+.login-logo h1{font-size:28px;font-weight:700;letter-spacing:-.5px}
+.login-logo h1 span{color:var(--primary)}
+.login-logo p{color:var(--text-secondary);font-size:14px;margin-top:6px}
+.login-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input{width:100%;padding:14px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.form-group input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;border-radius:var(--radius-sm);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s;margin-top:8px}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(34,197,94,0.3)}
+.login-error{color:var(--red);font-size:13px;text-align:center;margin-top:12px;min-height:20px}
+#main-screen{flex-direction:column}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg-card);position:sticky;top:0;z-index:100}
+.top-bar-left{display:flex;align-items:center;gap:12px}
+.top-bar-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:10px;display:flex;align-items:center;justify-content:center}
+.top-bar-logo svg{width:20px;height:20px}
+.top-bar h2{font-size:18px;font-weight:600}.top-bar h2 span{color:var(--primary)}
+.top-bar-right{display:flex;align-items:center;gap:12px}
+.user-badge{font-size:13px;color:var(--text-secondary);background:var(--bg-input);padding:6px 12px;border-radius:20px;border:1px solid var(--border)}
+.admin-toggle,.logout-btn{padding:8px 16px;border-radius:var(--radius-xs);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:transparent;color:var(--text-secondary)}
+.admin-toggle:hover{border-color:var(--primary);color:var(--primary)}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+.assistants-view{padding:32px 24px;max-width:1200px;margin:0 auto;width:100%}
+.assistants-header{margin-bottom:32px;animation:fadeIn .4s ease}
+.assistants-header h3{font-size:24px;font-weight:700;margin-bottom:6px}
+.assistants-header p{color:var(--text-secondary);font-size:14px}
+.assistants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.assistant-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;cursor:pointer;transition:all .25s ease;animation:fadeIn .5s ease backwards;position:relative;overflow:hidden}
+.assistant-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),transparent);opacity:0;transition:opacity .3s}
+.assistant-card:hover{border-color:var(--primary);transform:translateY(-3px);box-shadow:0 8px 30px rgba(34,197,94,0.1)}
+.assistant-card:hover::before{opacity:1}
+.assistant-card-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.assistant-avatar{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-input);border:1px solid var(--border-light)}
+.assistant-avatar svg{width:24px;height:24px}
+.assistant-card-header h4{font-size:16px;font-weight:600;line-height:1.3}
+.assistant-card-desc{color:var(--text-secondary);font-size:13px;line-height:1.6;margin-bottom:16px}
+.assistant-card-footer{display:flex;align-items:center;justify-content:space-between}
+.assistant-tag{font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--primary-glow);color:var(--primary);text-transform:uppercase;letter-spacing:.5px}
+.assistant-arrow{color:var(--text-muted);transition:transform .2s,color .2s;display:flex}
+.assistant-card:hover .assistant-arrow{transform:translateX(4px);color:var(--primary)}
+.chat-view{display:none;flex-direction:column;height:calc(100vh - 65px)}.chat-view.active{display:flex}
+.chat-header{display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.chat-back{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.chat-back:hover{border-color:var(--primary);color:var(--primary)}
+.chat-header-info h4{font-size:15px;font-weight:600}
+.chat-header-info p{font-size:12px;color:var(--text-muted)}
+.chat-messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;background:radial-gradient(ellipse at 50% 0%,rgba(34,197,94,0.03) 0%,transparent 50%),var(--bg-dark)}
+.chat-messages::-webkit-scrollbar{width:6px}.chat-messages::-webkit-scrollbar-track{background:transparent}.chat-messages::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+.message{max-width:75%;animation:fadeIn .3s ease}.message.user{align-self:flex-end}.message.assistant{align-self:flex-start}
+.message-bubble{padding:14px 18px;border-radius:var(--radius);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.message.user .message-bubble{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-bottom-right-radius:4px}
+.message.assistant .message-bubble{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);border-bottom-left-radius:4px}
+.message-time{font-size:11px;color:var(--text-muted);margin-top:4px;padding:0 4px}.message.user .message-time{text-align:right}
+.typing-indicator{display:none;align-self:flex-start;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);border-bottom-left-radius:4px}
+.typing-indicator.active{display:flex;gap:6px}
+.typing-dot{width:8px;height:8px;background:var(--primary);border-radius:50%;animation:typing-dot 1.4s ease infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+.chat-input-area{padding:16px 24px;border-top:1px solid var(--border);background:var(--bg-card)}
+.chat-input-wrap{display:flex;gap:10px;max-width:860px;margin:0 auto}
+.chat-input{flex:1;padding:14px 18px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;resize:none;min-height:48px;max-height:150px;transition:border-color .2s}
+.chat-input:focus{border-color:var(--primary)}.chat-input::placeholder{color:var(--text-muted)}
+.chat-send{width:48px;height:48px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;border-radius:var(--radius-sm);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .2s;flex-shrink:0}
+.chat-send svg{width:20px;height:20px}.chat-send:hover{transform:scale(1.05)}.chat-send:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.admin-view{display:none;padding:32px 24px;max-width:900px;margin:0 auto;width:100%}.admin-view.active{display:block}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.admin-header h3{font-size:22px;font-weight:700}
+.admin-add-btn{padding:10px 20px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;border-radius:var(--radius-xs);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:transform .15s}
+.admin-add-btn:hover{transform:translateY(-1px)}
+.admin-list{display:flex;flex-direction:column;gap:12px}
+.admin-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;animation:fadeIn .3s ease}
+.admin-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.admin-item-title{display:flex;align-items:center;gap:10px}
+.admin-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.admin-icon svg{width:24px;height:24px}
+.admin-item-title h4{font-size:15px;font-weight:600}
+.admin-item-actions{display:flex;gap:8px}
+.admin-edit-btn,.admin-delete-btn{padding:6px 14px;border-radius:var(--radius-xs);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;transition:all .2s}
+.admin-edit-btn{color:var(--primary)}.admin-edit-btn:hover{border-color:var(--primary);background:var(--primary-glow)}
+.admin-delete-btn{color:var(--red)}.admin-delete-btn:hover{border-color:var(--red);background:rgba(239,68,68,0.1)}
+.admin-item .form-group{margin-bottom:12px}
+.admin-item textarea{width:100%;padding:12px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;outline:none;resize:vertical;min-height:100px}
+.admin-item textarea:focus{border-color:var(--primary)}
+.admin-item input{width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none}
+.admin-item input:focus{border-color:var(--primary)}
+.admin-item-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.admin-save-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;border-radius:var(--radius-xs);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;transition:transform .15s}
+.admin-save-btn:hover{transform:translateY(-1px)}
+.icon-selector{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.icon-option{width:40px;height:40px;border-radius:10px;border:2px solid var(--border);background:var(--bg-input);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.icon-option:hover{border-color:var(--primary)}.icon-option.selected{border-color:var(--primary);background:var(--primary-glow)}
+.icon-option svg{width:20px;height:20px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.active{display:flex}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:500px;width:100%;animation:slideUp .3s ease}
+.modal h3{font-size:18px;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.modal-cancel{padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-secondary);font-family:'Space Grotesk',sans-serif;font-size:13px;cursor:pointer}
+.api-key-bar{display:none;padding:12px 24px;background:rgba(239,68,68,0.08);border-bottom:1px solid rgba(239,68,68,0.2);align-items:center;gap:12px;font-size:13px;color:var(--red)}
+.api-key-bar.active{display:flex}
+.api-key-bar input{flex:1;padding:8px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none}
+.api-key-bar button{padding:8px 16px;background:var(--primary);border:none;border-radius:var(--radius-xs);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.chat-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:40px;animation:fadeIn .5s ease}
+.chat-welcome .welcome-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:var(--bg-card);border:1px solid var(--border);margin-bottom:20px}
+.chat-welcome .welcome-icon svg{width:36px;height:36px}
+.chat-welcome h3{font-size:20px;font-weight:600;margin-bottom:8px}
+.chat-welcome p{color:var(--text-secondary);font-size:14px;max-width:400px;line-height:1.6}
+@media(max-width:768px){.assistants-grid{grid-template-columns:1fr}.message{max-width:90%}.top-bar{padding:12px 16px}.user-badge{display:none}.assistants-view{padding:20px 16px}.chat-messages{padding:16px}.chat-input-area{padding:12px 16px}.admin-item-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="screen active">
+<div class="login-container">
+<div class="login-logo">
+<div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+<h1>TALKO <span>AI</span></h1>
+<p>Платформа AI-асистентів для бізнесу</p>
+</div>
+<div class="login-box">
+<div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+<div class="form-group"><label>Пароль</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"></div>
+<button class="login-btn" id="login-btn">Увійти</button>
+<div class="login-error" id="login-error"></div>
+</div>
+</div>
+</div>
+
+<div id="main-screen" class="screen">
+<div class="top-bar">
+<div class="top-bar-left">
+<div class="top-bar-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+<h2>TALKO <span>AI</span></h2>
+</div>
+<div class="top-bar-right">
+<span class="user-badge" id="user-email"></span>
+<button class="admin-toggle" id="admin-toggle" style="display:none">Адмін</button>
+<button class="logout-btn" id="logout-btn">Вийти</button>
+</div>
+</div>
+<div class="api-key-bar" id="api-key-bar">OpenAI API ключ не налаштований.<input type="password" id="api-key-input" placeholder="sk-..."><button id="api-key-save">Зберегти</button></div>
+<div class="assistants-view" id="assistants-view">
+<div class="assistants-header"><h3>AI-Асистенти</h3><p>Оберіть асистента для початку роботи</p></div>
+<div class="assistants-grid" id="assistants-grid"></div>
+</div>
+<div class="chat-view" id="chat-view">
+<div class="chat-header">
+<button class="chat-back" id="chat-back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
+<div class="chat-header-avatar assistant-avatar" id="chat-avatar"></div>
+<div class="chat-header-info"><h4 id="chat-name"></h4><p id="chat-desc"></p></div>
+</div>
+<div class="chat-messages" id="chat-messages"></div>
+<div class="typing-indicator" id="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+<div class="chat-input-area"><div class="chat-input-wrap">
+<textarea class="chat-input" id="chat-input" placeholder="Напишіть повідомлення..." rows="1"></textarea>
+<button class="chat-send" id="chat-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+</div></div>
+</div>
+<div class="admin-view" id="admin-view">
+<div class="admin-header"><h3>Управління асистентами</h3><button class="admin-add-btn" id="admin-add-btn">+ Додати</button></div>
+<div class="admin-list" id="admin-list"></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="delete-modal">
+<div class="modal"><h3>Видалити асистента?</h3><p style="color:var(--text-secondary);font-size:14px;">Цю дію не можна скасувати.</p>
+<div class="modal-actions"><button class="modal-cancel" id="delete-cancel">Скасувати</button><button class="admin-delete-btn" id="delete-confirm" style="padding:10px 20px">Видалити</button></div>
+</div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+// ===== SVG ICONS LIBRARY =====
+const ICONS={
+analytics:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="6" rx="1"/><rect x="14" y="8" width="3" height="11" rx="1"/><path d="M7 8l3-3 4 4 3-3"/></svg>',
+people:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+target:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+finance:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+medical:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M3 8v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8"/><path d="M12 12v4"/><path d="M10 14h4"/></svg>',
+chart:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/><path d="M14 9h5v5"/></svg>',
+pencil:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+clipboard:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>',
+scale:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+cpu:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>',
+bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+message:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+globe:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+shield:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+settings:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+};
+const ICON_KEYS=Object.keys(ICONS);
+function getIcon(id){return ICONS[id]||ICONS.bolt}
+
+// ===== CONFIG =====
+const FIREBASE_CONFIG={apiKey:"AIzaSyC74r_H2PVTPP4QdJXGRbqKvtcKCDJNoh4",authDomain:"ai-assistant-platform-e77ee.firebaseapp.com",projectId:"ai-assistant-platform-e77ee",storageBucket:"ai-assistant-platform-e77ee.firebasestorage.app",messagingSenderId:"342266457067",appId:"1:342266457067:web:a667b0593183a70fd8c7ae"};
+const ADMIN_EMAIL="management.talco@gmail.com";
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth=firebase.auth(),db=firebase.firestore();
+let currentUser=null,isAdmin=false,currentAssistant=null,chatHistory={},openaiKey='',assistantsData=[];
+
+const DEFAULT_ASSISTANTS=[
+{name:"Бізнес-аналітик",icon:"analytics",description:"Аналізує бізнес-процеси, знаходить вузькі місця та пропонує оптимізацію на основі даних",tag:"Аналітика",model:"gpt-4o-mini",prompt:"Ти — бізнес-аналітик TALKO System. Аналізуєш бізнес-процеси, знаходиш вузькі місця та пропонуєш конкретні рішення з цифрами. Відповідай по суті, без води.",welcome:"Опишіть ваш бізнес-процес або проблему — я проаналізую та покажу де ви втрачаєте гроші.",order:0},
+{name:"HR-менеджер",icon:"people",description:"Допомагає з наймом, адаптацією, мотивацією та управлінням командою",tag:"Персонал",model:"gpt-4o-mini",prompt:"Ти — HR-менеджер TALKO System. Допомагаєш з усіма питаннями управління персоналом: найм, адаптація, мотивація, KPI, звільнення.",welcome:"Яке HR-питання вас турбує? Найм, мотивація, KPI?",order:1},
+{name:"Маркетолог",icon:"target",description:"Стратегії залучення клієнтів, воронки продажів, контент-план та реклама",tag:"Маркетинг",model:"gpt-4o-mini",prompt:"Ти — маркетолог TALKO System. Створюєш стратегії залучення клієнтів, воронки продажів, контент-плани та рекламні кампанії.",welcome:"Розкажіть про ваш продукт та цільову аудиторію.",order:2},
+{name:"Фінансовий директор",icon:"finance",description:"Фінансове планування, бюджетування, аналіз прибутковості та оптимізація витрат",tag:"Фінанси",model:"gpt-4o-mini",prompt:"Ти — фінансовий директор TALKO System. Аналізуєш фінанси бізнесу: P&L, cashflow, маржинальність, точка беззбитковості.",welcome:"Яке фінансове питання хочете розібрати?",order:3},
+{name:"Медичний консультант",icon:"medical",description:"Спеціалізований асистент для медичних клінік: маркетинг, процеси, пацієнтопотік",tag:"Медицина",model:"gpt-4o-mini",prompt:"Ти — консультант TALKO System для медичних клінік. Знаєш специфіку медичного бізнесу: пацієнтопотік, LTV пацієнта, конверсія.",welcome:"Яке питання по вашій клініці?",order:4},
+{name:"Продажник",icon:"chart",description:"Скрипти продажів, робота із запереченнями, підвищення конверсії",tag:"Продажі",model:"gpt-4o-mini",prompt:"Ти — тренер з продажів TALKO System. Створюєш скрипти, відпрацьовуєш заперечення, підвищуєш конверсію.",welcome:"Що продаєте і яка проблема з продажами?",order:5},
+{name:"Контент-мейкер",icon:"pencil",description:"Тексти для соцмереж, email-розсилки, лендінги та рекламні креативи",tag:"Контент",model:"gpt-4o-mini",prompt:"Ти — контент-мейкер TALKO System. Пишеш продаючі тексти: пости, email, лендінги, рекламні креативи.",welcome:"Який текст потрібен? Пост, email, лендінг?",order:6},
+{name:"Проджект-менеджер",icon:"clipboard",description:"Планування проєктів, декомпозиція задач, контроль дедлайнів та ресурсів",tag:"Управління",model:"gpt-4o-mini",prompt:"Ти — проджект-менеджер TALKO System. Декомпозуєш проєкти на задачі, розставляєш пріоритети, контролюєш дедлайни.",welcome:"Який проєкт потрібно спланувати?",order:7},
+{name:"Юридичний радник",icon:"scale",description:"Базові юридичні питання для бізнесу: договори, ФОП, податки, захист",tag:"Юридика",model:"gpt-4o-mini",prompt:"Ти — юридичний радник TALKO System. Допомагаєш з базовими юридичними питаннями бізнесу: ФОП/ТОВ, податки, договори.",welcome:"Яке юридичне питання по бізнесу?",order:8},
+{name:"AI-інтегратор",icon:"cpu",description:"Впровадження AI в бізнес-процеси: автоматизація, чат-боти, аналітика",tag:"AI",model:"gpt-4o-mini",prompt:"Ти — AI-інтегратор TALKO System. Допомагаєш впровадити AI в бізнес: чат-боти, автоматизація процесів, AI-аналітика.",welcome:"Який процес хочете автоматизувати за допомогою AI?",order:9}
+];
+
+// ===== AUTH =====
+auth.onAuthStateChanged(async(user)=>{
+if(user){currentUser=user;isAdmin=user.email===ADMIN_EMAIL;
+document.getElementById('login-screen').classList.remove('active');
+document.getElementById('main-screen').classList.add('active');
+document.getElementById('user-email').textContent=user.email;
+if(isAdmin)document.getElementById('admin-toggle').style.display='';
+try{const c=await db.collection('config').doc('openai').get();if(c.exists)openaiKey=c.data().apiKey||''}catch(e){}
+if(!openaiKey&&isAdmin)document.getElementById('api-key-bar').classList.add('active');
+await loadAssistants();
+}else{currentUser=null;isAdmin=false;
+document.getElementById('login-screen').classList.add('active');
+document.getElementById('main-screen').classList.remove('active')}
+});
+
+document.getElementById('login-btn').addEventListener('click',async()=>{
+const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-password').value,err=document.getElementById('login-error');
+err.textContent='';if(!e||!p){err.textContent='Введіть email та пароль';return}
+try{await auth.signInWithEmailAndPassword(e,p)}catch(x){err.textContent='Невірний email або пароль'}
+});
+document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-btn').click()});
+document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-password').focus()});
+document.getElementById('logout-btn').addEventListener('click',()=>{auth.signOut();chatHistory={}});
+document.getElementById('api-key-save').addEventListener('click',async()=>{
+const k=document.getElementById('api-key-input').value.trim();if(!k)return;
+try{await db.collection('config').doc('openai').set({apiKey:k});openaiKey=k;document.getElementById('api-key-bar').classList.remove('active')}catch(e){alert('Помилка збереження')}
+});
+
+// ===== ASSISTANTS =====
+async function loadAssistants(){
+try{const s=await db.collection('assistants').orderBy('order').get();
+if(s.empty){for(const a of DEFAULT_ASSISTANTS)await db.collection('assistants').add(a);return loadAssistants()}
+assistantsData=s.docs.map(d=>({id:d.id,...d.data()}));renderAssistants();if(isAdmin)renderAdminList();
+}catch(e){console.error('Error:',e)}
+}
+
+function renderAssistants(){
+const g=document.getElementById('assistants-grid');
+g.innerHTML=assistantsData.map((a,i)=>`
+<div class="assistant-card" data-id="${a.id}" style="animation-delay:${i*0.06}s">
+<div class="assistant-card-header">
+<div class="assistant-avatar">${getIcon(a.icon||'bolt')}</div>
+<h4>${a.name}</h4>
+</div>
+<div class="assistant-card-desc">${a.description||''}</div>
+<div class="assistant-card-footer">
+<span class="assistant-tag">${a.tag||'AI'}</span>
+<span class="assistant-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+</div>
+</div>`).join('');
+g.querySelectorAll('.assistant-card').forEach(c=>c.addEventListener('click',()=>openChat(c.dataset.id)));
+}
+
+// ===== CHAT =====
+function openChat(id){
+currentAssistant=assistantsData.find(a=>a.id===id);if(!currentAssistant)return;
+document.getElementById('assistants-view').style.display='none';
+document.getElementById('admin-view').classList.remove('active');
+document.getElementById('chat-view').classList.add('active');
+document.getElementById('chat-avatar').innerHTML=getIcon(currentAssistant.icon||'bolt');
+document.getElementById('chat-name').textContent=currentAssistant.name;
+document.getElementById('chat-desc').textContent=currentAssistant.tag||'';
+const m=document.getElementById('chat-messages');m.innerHTML='';
+if(!chatHistory[id]||!chatHistory[id].length){
+m.innerHTML=`<div class="chat-welcome"><div class="welcome-icon">${getIcon(currentAssistant.icon||'bolt')}</div><h3>${currentAssistant.name}</h3><p>${currentAssistant.welcome||'Чим можу допомогти?'}</p></div>`;
+}else{chatHistory[id].forEach(msg=>appendMessage(msg.role,msg.content,false));scrollToBottom()}
+document.getElementById('chat-input').focus();
+}
+function closeChat(){document.getElementById('chat-view').classList.remove('active');document.getElementById('assistants-view').style.display='';currentAssistant=null}
+document.getElementById('chat-back').addEventListener('click',closeChat);
+
+function appendMessage(role,content,animate=true){
+const m=document.getElementById('chat-messages'),w=m.querySelector('.chat-welcome');if(w)w.remove();
+const d=document.createElement('div');d.className=`message ${role==='user'?'user':'assistant'}`;
+if(!animate)d.style.animation='none';
+const t=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
+let h=escapeHtml(content);h=h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+h=h.replace(/`([^`]+)`/g,'<code style="background:rgba(34,197,94,0.1);padding:2px 6px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:12px">$1</code>');
+d.innerHTML=`<div class="message-bubble">${h}</div><div class="message-time">${t}</div>`;
+m.appendChild(d);scrollToBottom();
+}
+function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function scrollToBottom(){const e=document.getElementById('chat-messages');e.scrollTop=e.scrollHeight}
+function showTyping(s){const e=document.getElementById('typing-indicator');e.classList.toggle('active',s);if(s)scrollToBottom()}
+
+async function sendMessage(){
+const input=document.getElementById('chat-input'),text=input.value.trim();if(!text||!currentAssistant)return;
+input.value='';input.style.height='auto';appendMessage('user',text);
+if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
+chatHistory[currentAssistant.id].push({role:'user',content:text});
+document.getElementById('chat-send').disabled=true;showTyping(true);
+try{
+const msgs=[{role:'system',content:currentAssistant.prompt||'Ти — AI-асистент.'},...chatHistory[currentAssistant.id].map(m=>({role:m.role,content:m.content}))];
+const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},body:JSON.stringify({model:currentAssistant.model||'gpt-4o-mini',messages:msgs,max_tokens:2000,temperature:0.7})});
+if(!r.ok)throw new Error(r.status);
+const data=await r.json(),reply=data.choices[0].message.content;
+chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
+}catch(e){showTyping(false);appendMessage('assistant','Помилка з\'єднання. Перевірте API ключ.');console.error(e)}
+document.getElementById('chat-send').disabled=false;input.focus();
+}
+document.getElementById('chat-send').addEventListener('click',sendMessage);
+document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
+document.getElementById('chat-input').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'});
+
+// ===== ADMIN =====
+let currentView='assistants';
+document.getElementById('admin-toggle').addEventListener('click',()=>{
+if(currentView==='admin'){document.getElementById('admin-view').classList.remove('active');document.getElementById('assistants-view').style.display='';document.getElementById('chat-view').classList.remove('active');document.getElementById('admin-toggle').textContent='Адмін';currentView='assistants'}
+else{document.getElementById('admin-view').classList.add('active');document.getElementById('assistants-view').style.display='none';document.getElementById('chat-view').classList.remove('active');document.getElementById('admin-toggle').textContent='← Назад';currentView='admin';renderAdminList()}
+});
+
+function renderIconSelector(sel,inputId){
+return `<div class="icon-selector">${ICON_KEYS.map(k=>`<div class="icon-option ${k===sel?'selected':''}" data-icon="${k}" onclick="selectIcon('${inputId}','${k}')">${ICONS[k]}</div>`).join('')}</div><input type="hidden" id="${inputId}" value="${sel||'bolt'}">`;
+}
+window.selectIcon=function(inputId,key){
+document.getElementById(inputId).value=key;
+document.getElementById(inputId).closest('.form-group').querySelectorAll('.icon-option').forEach(el=>el.classList.toggle('selected',el.dataset.icon===key));
+};
+
+function renderAdminList(){
+document.getElementById('admin-list').innerHTML=assistantsData.map(a=>`
+<div class="admin-item" data-id="${a.id}">
+<div class="admin-item-header">
+<div class="admin-item-title"><div class="admin-icon">${getIcon(a.icon||'bolt')}</div><h4>${a.name}</h4></div>
+<div class="admin-item-actions"><button class="admin-edit-btn" onclick="toggleEdit('${a.id}')">Редагувати</button><button class="admin-delete-btn" onclick="confirmDel('${a.id}')">Видалити</button></div>
+</div>
+<div id="ef-${a.id}" style="display:none">
+<div class="form-group"><label>Назва</label><input id="en-${a.id}" value="${esc(a.name)}"></div>
+<div class="form-group"><label>Іконка</label>${renderIconSelector(a.icon||'bolt','ei-'+a.id)}</div>
+<div class="admin-item-row"><div class="form-group"><label>Тег</label><input id="et-${a.id}" value="${esc(a.tag||'')}"></div><div class="form-group"><label>Модель</label><input id="em-${a.id}" value="${a.model||'gpt-4o-mini'}"></div></div>
+<div class="form-group"><label>Опис</label><input id="ed-${a.id}" value="${esc(a.description||'')}"></div>
+<div class="form-group"><label>Привітання</label><input id="ew-${a.id}" value="${esc(a.welcome||'')}"></div>
+<div class="form-group"><label>Системний промпт</label><textarea id="ep-${a.id}" rows="6">${esc(a.prompt||'')}</textarea></div>
+<div class="form-group"><label>Порядок</label><input id="eo-${a.id}" type="number" value="${a.order||0}" style="width:100px"></div>
+<button class="admin-save-btn" onclick="saveA('${a.id}')">Зберегти</button>
+</div></div>`).join('');
+}
+
+function esc(s){return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+window.toggleEdit=function(id){const f=document.getElementById('ef-'+id);f.style.display=f.style.display==='none'?'':'none'};
+window.saveA=async function(id){
+const d={name:document.getElementById('en-'+id).value,icon:document.getElementById('ei-'+id).value,tag:document.getElementById('et-'+id).value,model:document.getElementById('em-'+id).value,description:document.getElementById('ed-'+id).value,welcome:document.getElementById('ew-'+id).value,prompt:document.getElementById('ep-'+id).value,order:parseInt(document.getElementById('eo-'+id).value)||0};
+try{await db.collection('assistants').doc(id).update(d);await loadAssistants();if(currentView==='admin')renderAdminList()}catch(e){alert('Помилка');console.error(e)}
+};
+
+document.getElementById('admin-add-btn').addEventListener('click',async()=>{
+try{await db.collection('assistants').add({name:"Новий асистент",icon:"bolt",description:"Опис",tag:"AI",model:"gpt-4o-mini",prompt:"Ти — AI-асистент.",welcome:"Чим допомогти?",order:assistantsData.length});await loadAssistants();renderAdminList()}catch(e){alert('Помилка')}
+});
+
+let delId=null;
+window.confirmDel=function(id){delId=id;document.getElementById('delete-modal').classList.add('active')};
+document.getElementById('delete-cancel').addEventListener('click',()=>{document.getElementById('delete-modal').classList.remove('active');delId=null});
+document.getElementById('delete-confirm').addEventListener('click',async()=>{
+if(!delId)return;try{await db.collection('assistants').doc(delId).delete();document.getElementById('delete-modal').classList.remove('active');delId=null;await loadAssistants();renderAdminList()}catch(e){alert('Помилка')}
+});
+document.getElementById('delete-modal').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('delete-modal').classList.remove('active');delId=null}});
+</script>
+</body>
+</html>
