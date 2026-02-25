@@ -58,8 +58,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .tb-btn:active{transform:scale(0.95)}
 .tb-btn.logout:hover{border-color:var(--red);color:var(--red)}
 .tb-btn.icon-btn{font-size:16px;padding:6px 9px;line-height:1;min-width:34px}
-.lang-select{padding:6px 8px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:14px;cursor:pointer;border:1px solid var(--border);background:var(--bg-input);color:var(--text-secondary);outline:none;appearance:none;min-width:38px;text-align:center;transition:all .15s;min-height:34px}
-.lang-select:hover{border-color:var(--primary);color:var(--primary)}
+.lang-select{padding:6px 10px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);outline:none;min-width:48px;text-align:center;transition:all .15s;min-height:34px}
+.lang-select:hover,.lang-select:focus{border-color:var(--primary);color:var(--primary)}
+.lang-select option{background:var(--bg-card);color:var(--text-primary);padding:8px}
 .main-content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 
 /* === ASSISTANTS GRID === */
@@ -179,6 +180,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .quick-prompt{padding:8px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:all .15s;white-space:nowrap}
 .quick-prompt:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
 .quick-prompt:active{transform:scale(0.95)}
+.start-btn{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:14px 32px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:none;border-radius:12px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 16px rgba(34,197,94,0.25)}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(34,197,94,0.35)}
+.start-btn:active{transform:scale(0.96)}
 
 /* ========== RESPONSIVE ========== */
 
@@ -218,6 +222,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .chat-input-area{padding:8px 0;padding-bottom:calc(8px + var(--safe-bottom));gap:6px}
 .chat-input-area textarea{padding:10px 12px;border-radius:10px;min-height:40px;font-size:16px}
 .chat-send-btn{width:40px;height:40px;border-radius:10px}
+.start-btn{padding:12px 24px;font-size:14px;border-radius:10px}
 .admin-view{padding:14px 12px;padding-bottom:calc(14px + var(--safe-bottom))}
 .admin-item{padding:14px;border-radius:10px}
 .admin-item-row{grid-template-columns:1fr}
@@ -304,6 +309,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 <p data-i18n="login_subtitle">AI-асистенти для вашого бізнесу</p>
 </div>
 <div class="login-box">
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><select class="lang-select" id="login-lang-select" title="Language"><option value="uk">UA</option><option value="ru">RU</option><option value="en">EN</option></select></div>
 <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="email@company.com"></div>
 <div class="form-group"><label data-i18n="password">Пароль</label><input type="password" id="login-password" placeholder="••••••••"></div>
 <button class="login-btn" id="login-btn" data-i18n="login_btn">Увійти</button>
@@ -377,9 +383,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 <script>
 // ===== i18n =====
 const I18N={
-uk:{login_subtitle:'AI-асистенти для вашого бізнесу',password:'Пароль',login_btn:'Увійти',admin_btn:'Адмін',logout_btn:'Вийти',save_btn:'Зберегти',assistants_title:'Ваші AI-асистенти',assistants_subtitle:'Оберіть асистента для вирішення бізнес-задач',admin_title:'Управління асистентами',add_btn:'Додати',delete_title:'Видалити асистента?',delete_desc:'Цю дію неможливо скасувати',cancel_btn:'Скасувати',delete_btn:'Видалити',clear_chat:'Очистити',chat_placeholder:'Напишіть повідомлення...',no_api_key:'API ключ не налаштований. Зверніться до адміністратора.',error_msg:'Помилка. Перевірте API ключ або спробуйте ще раз.',no_reply:'Немає відповіді.',login_error:'Невірний email або пароль',fill_fields:'Введіть email та пароль',saved:'Збережено',error:'Помилка',edit_btn:'Редагувати',name_label:'Назва',icon_label:'Іконка',tag_label:'Тег',model_label:'Модель',desc_label:'Опис',welcome_label:'Привітання',prompt_label:'Системний промпт',order_label:'Порядок',or_try:'або спробуйте:'},
-ru:{login_subtitle:'AI-ассистенты для вашего бизнеса',password:'Пароль',login_btn:'Войти',admin_btn:'Админ',logout_btn:'Выйти',save_btn:'Сохранить',assistants_title:'Ваши AI-ассистенты',assistants_subtitle:'Выберите ассистента для решения бизнес-задач',admin_title:'Управление ассистентами',add_btn:'Добавить',delete_title:'Удалить ассистента?',delete_desc:'Это действие нельзя отменить',cancel_btn:'Отмена',delete_btn:'Удалить',clear_chat:'Очистить',chat_placeholder:'Напишите сообщение...',no_api_key:'API ключ не настроен. Обратитесь к администратору.',error_msg:'Ошибка. Проверьте API ключ или попробуйте снова.',no_reply:'Нет ответа.',login_error:'Неверный email или пароль',fill_fields:'Введите email и пароль',saved:'Сохранено',error:'Ошибка',edit_btn:'Редактировать',name_label:'Название',icon_label:'Иконка',tag_label:'Тег',model_label:'Модель',desc_label:'Описание',welcome_label:'Приветствие',prompt_label:'Системный промпт',order_label:'Порядок',or_try:'или попробуйте:'},
-en:{login_subtitle:'AI assistants for your business',password:'Password',login_btn:'Sign In',admin_btn:'Admin',logout_btn:'Sign Out',save_btn:'Save',assistants_title:'Your AI Assistants',assistants_subtitle:'Choose an assistant to solve business tasks',admin_title:'Manage Assistants',add_btn:'Add',delete_title:'Delete assistant?',delete_desc:'This action cannot be undone',cancel_btn:'Cancel',delete_btn:'Delete',clear_chat:'Clear',chat_placeholder:'Type a message...',no_api_key:'API key not configured. Contact administrator.',error_msg:'Error. Check API key or try again.',no_reply:'No response.',login_error:'Invalid email or password',fill_fields:'Enter email and password',saved:'Saved',error:'Error',edit_btn:'Edit',name_label:'Name',icon_label:'Icon',tag_label:'Tag',model_label:'Model',desc_label:'Description',welcome_label:'Welcome',prompt_label:'System prompt',order_label:'Order',or_try:'or try:'}
+uk:{login_subtitle:'AI-асистенти для вашого бізнесу',password:'Пароль',login_btn:'Увійти',admin_btn:'Адмін',logout_btn:'Вийти',save_btn:'Зберегти',assistants_title:'Ваші AI-асистенти',assistants_subtitle:'Оберіть асистента для вирішення бізнес-задач',admin_title:'Управління асистентами',add_btn:'Додати',delete_title:'Видалити асистента?',delete_desc:'Цю дію неможливо скасувати',cancel_btn:'Скасувати',delete_btn:'Видалити',clear_chat:'Очистити',chat_placeholder:'Напишіть повідомлення...',no_api_key:'API ключ не налаштований. Зверніться до адміністратора.',error_msg:'Помилка. Перевірте API ключ або спробуйте ще раз.',no_reply:'Немає відповіді.',login_error:'Невірний email або пароль',fill_fields:'Введіть email та пароль',saved:'Збережено',error:'Помилка',edit_btn:'Редагувати',name_label:'Назва',icon_label:'Іконка',tag_label:'Тег',model_label:'Модель',desc_label:'Опис',welcome_label:'Привітання',prompt_label:'Системний промпт',order_label:'Порядок',or_try:'або спробуйте:',start_btn:'▶ Запустити асистента'},
+ru:{login_subtitle:'AI-ассистенты для вашего бизнеса',password:'Пароль',login_btn:'Войти',admin_btn:'Админ',logout_btn:'Выйти',save_btn:'Сохранить',assistants_title:'Ваши AI-ассистенты',assistants_subtitle:'Выберите ассистента для решения бизнес-задач',admin_title:'Управление ассистентами',add_btn:'Добавить',delete_title:'Удалить ассистента?',delete_desc:'Это действие нельзя отменить',cancel_btn:'Отмена',delete_btn:'Удалить',clear_chat:'Очистить',chat_placeholder:'Напишите сообщение...',no_api_key:'API ключ не настроен. Обратитесь к администратору.',error_msg:'Ошибка. Проверьте API ключ или попробуйте снова.',no_reply:'Нет ответа.',login_error:'Неверный email или пароль',fill_fields:'Введите email и пароль',saved:'Сохранено',error:'Ошибка',edit_btn:'Редактировать',name_label:'Название',icon_label:'Иконка',tag_label:'Тег',model_label:'Модель',desc_label:'Описание',welcome_label:'Приветствие',prompt_label:'Системный промпт',order_label:'Порядок',or_try:'или попробуйте:',start_btn:'▶ Запустить ассистента'},
+en:{login_subtitle:'AI assistants for your business',password:'Password',login_btn:'Sign In',admin_btn:'Admin',logout_btn:'Sign Out',save_btn:'Save',assistants_title:'Your AI Assistants',assistants_subtitle:'Choose an assistant to solve business tasks',admin_title:'Manage Assistants',add_btn:'Add',delete_title:'Delete assistant?',delete_desc:'This action cannot be undone',cancel_btn:'Cancel',delete_btn:'Delete',clear_chat:'Clear',chat_placeholder:'Type a message...',no_api_key:'API key not configured. Contact administrator.',error_msg:'Error. Check API key or try again.',no_reply:'No response.',login_error:'Invalid email or password',fill_fields:'Enter email and password',saved:'Saved',error:'Error',edit_btn:'Edit',name_label:'Name',icon_label:'Icon',tag_label:'Tag',model_label:'Model',desc_label:'Description',welcome_label:'Welcome',prompt_label:'System prompt',order_label:'Order',or_try:'or try:',start_btn:'▶ Start Assistant'}
 };
 let currentLang='uk';
 function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||I18N.uk[key]||key}
@@ -391,15 +397,26 @@ function initLang(){
 const saved=localStorage.getItem('talko-lang')||'uk';
 currentLang=saved;
 document.documentElement.setAttribute('data-lang',saved);
+document.documentElement.setAttribute('lang',saved==='uk'?'uk':saved==='ru'?'ru':'en');
 document.getElementById('lang-select').value=saved;
+document.getElementById('login-lang-select').value=saved;
 applyI18n();
 }
-document.getElementById('lang-select').addEventListener('change',function(){
-currentLang=this.value;
+function switchLang(lang){
+currentLang=lang;
 localStorage.setItem('talko-lang',currentLang);
 document.documentElement.setAttribute('data-lang',currentLang);
+document.documentElement.setAttribute('lang',currentLang==='uk'?'uk':currentLang==='ru'?'ru':'en');
+// Sync both selects
+document.getElementById('lang-select').value=lang;
+document.getElementById('login-lang-select').value=lang;
 applyI18n();
-if(isAdmin&&currentView==='admin')renderAdminList();
+if(typeof isAdmin!=='undefined'&&isAdmin&&typeof currentView!=='undefined'&&currentView==='admin')renderAdminList();
+}
+['lang-select','login-lang-select'].forEach(id=>{
+const el=document.getElementById(id);
+el.addEventListener('change',function(){switchLang(this.value)});
+el.addEventListener('input',function(){switchLang(this.value)});
 });
 
 // ===== ICONS =====
@@ -536,18 +553,53 @@ document.getElementById('chat-name').textContent=currentAssistant.name;
 document.getElementById('chat-desc').textContent=currentAssistant.tag||'';
 const m=document.getElementById('chat-messages');m.innerHTML='';
 if(!chatHistory[id]||!chatHistory[id].length){
-const qp=getQuickPrompts(currentAssistant.icon||'bolt');
-m.innerHTML=`<div class="chat-welcome"><div class="welcome-icon">${getIcon(currentAssistant.icon||'bolt')}</div><h3>${currentAssistant.name}</h3><p>${currentAssistant.welcome||'...'}</p><p style="font-size:12px;color:var(--text-muted);margin-top:14px">${t('or_try')}</p><div class="quick-prompts">${qp.map(p=>`<button class="quick-prompt" onclick="quickSend(this)">${p}</button>`).join('')}</div></div>`;
+renderWelcome(m);
 }else{chatHistory[id].forEach(msg=>appendMessage(msg.role,msg.content,false));scrollToBottom()}
 document.getElementById('chat-input').focus();
 }
+function renderWelcome(container){
+if(!currentAssistant)return;
+const qp=getQuickPrompts(currentAssistant.icon||'bolt');
+container.innerHTML=`<div class="chat-welcome">
+<div class="welcome-icon">${getIcon(currentAssistant.icon||'bolt')}</div>
+<h3>${currentAssistant.name}</h3>
+<p>${currentAssistant.welcome||'...'}</p>
+<button class="start-btn" onclick="startAssistant()">${t('start_btn')}</button>
+<p style="font-size:12px;color:var(--text-muted);margin-top:16px">${t('or_try')}</p>
+<div class="quick-prompts">${qp.map(p=>`<button class="quick-prompt" onclick="quickSend(this)">${p}</button>`).join('')}</div>
+</div>`;
+}
+window.startAssistant=function(){
+if(!currentAssistant||!openaiKey)return;
+// Send a hidden "start" message — user sees nothing, AI responds with greeting
+const startMsg=currentAssistant.welcome||'Почни роботу';
+if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
+chatHistory[currentAssistant.id].push({role:'user',content:startMsg});
+const m=document.getElementById('chat-messages');
+const w=m.querySelector('.chat-welcome');if(w)w.remove();
+document.getElementById('chat-send').disabled=true;showTyping(true);
+(async()=>{
+try{
+const inputMsgs=[{role:'developer',content:currentAssistant.prompt||'Ти — AI-асистент.'},...chatHistory[currentAssistant.id].map(msg=>({role:msg.role,content:msg.content}))];
+const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},body:JSON.stringify({model:currentAssistant.model||'gpt-5.2',input:inputMsgs,tools:[{type:'web_search_preview'}],reasoning:{effort:'none'}})});
+if(!r.ok)throw new Error(await r.text());
+const data=await r.json();
+let reply='';
+if(data.output){for(const item of data.output){if(item.type==='message'&&item.content){for(const c of item.content){if(c.type==='output_text')reply+=c.text}}}}
+if(!reply)reply=t('no_reply');
+chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
+}catch(e){showTyping(false);chatHistory[currentAssistant.id].pop();appendMessage('assistant',t('error_msg'));console.error(e)}
+document.getElementById('chat-send').disabled=false;
+})();
+};
 window.quickSend=function(btn){document.getElementById('chat-input').value=btn.textContent;sendMessage()};
 function closeChat(){document.getElementById('chat-view').classList.remove('active');document.getElementById('assistants-view').style.display='';currentAssistant=null}
 document.getElementById('chat-back').addEventListener('click',closeChat);
 document.getElementById('chat-clear').addEventListener('click',()=>{
 if(!currentAssistant)return;
 chatHistory[currentAssistant.id]=[];
-document.getElementById('chat-messages').innerHTML=`<div class="chat-welcome"><div class="welcome-icon">${getIcon(currentAssistant.icon||'bolt')}</div><h3>${currentAssistant.name}</h3><p>${currentAssistant.welcome||'...'}</p></div>`;
+const m=document.getElementById('chat-messages');m.innerHTML='';
+renderWelcome(m);
 });
 
 function appendMessage(role,content,animate=true){
