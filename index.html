@@ -568,8 +568,6 @@ container.innerHTML=`<div class="chat-welcome">
 <h3>${currentAssistant.name}</h3>
 <p>${currentAssistant.welcome||'...'}</p>
 <button class="start-btn" onclick="startAssistant()">${t('start_btn')}</button>
-<p style="font-size:12px;color:var(--text-muted);margin-top:16px">${t('or_try')}</p>
-<div class="quick-prompts">${qp.map(p=>`<button class="quick-prompt" onclick="quickSend(this)">${p}</button>`).join('')}</div>
 </div>`;
 }
 window.startAssistant=function(){
