@@ -446,6 +446,8 @@ const ADMIN_EMAIL="management.talco@gmail.com";
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth=firebase.auth(),db=firebase.firestore();
 let currentUser=null,isAdmin=false,currentAssistant=null,chatHistory={},openaiKey='',assistantsData=[];
+// ── Cloud Function URL (replace YOUR-PROJECT-ID after deploy) ──
+const CHAT_FUNCTION_URL='https://europe-west1-ai-assistant-platform-e77ee.cloudfunctions.net/chat';
 
 const DEFAULT_ASSISTANTS=[
 {name:"Генератор розпоряджень",icon:"clipboard",description:"Генерує чіткі розпорядження за 30 секунд. Підлеглі перестануть перепитувати",tag:"Управління",model:"gpt-5.2",prompt:"Ти — AI-асистент TALKO System 'Генератор чітких розпоряджень'. Твоя задача — перетворювати нечіткі побажання керівника у структуроване розпорядження.\n\nФОРМАТ РОЗПОРЯДЖЕННЯ:\n1. ЗАДАЧА: (що конкретно зробити — одне речення)\n2. РЕЗУЛЬТАТ: (що має бути на виході — вимірюваний продукт)\n3. ДЕДЛАЙН: (конкретна дата та час)\n4. ВІДПОВІДАЛЬНИЙ: (хто виконує)\n5. РЕСУРСИ: (що потрібно для виконання)\n6. КОНТРОЛЬНЕ ПИТАННЯ: (як перевірити що зроблено правильно)\n7. ЩО РОБИТИ ЯКЩО: (якщо виникне проблема — до кого звертатись)\n\nПРАВИЛА:\n- Завжди перепитуй якщо не вистачає інформації\n- Використовуй конкретні дієслова: 'підготувати', 'надіслати', 'зібрати'\n- Результат завжди вимірюваний: документ, файл, звіт, список\n- Якщо керівник каже розмито — запропонуй 2-3 варіанти конкретизації\n- Відповідай мовою користувача",welcome:"Опишіть задачу — я сформую чітке розпорядження за 30 секунд.",order:0},
@@ -486,9 +488,10 @@ if(user){currentUser=user;isAdmin=user.email===ADMIN_EMAIL;
 document.getElementById('login-screen').classList.remove('active');
 document.getElementById('main-screen').classList.add('active');
 document.getElementById('user-email').textContent=user.email;
-if(isAdmin)document.getElementById('admin-toggle').style.display='';
+if(isAdmin){document.getElementById('admin-toggle').style.display='';
 try{const c=await db.collection('config').doc('openai').get();if(c.exists)openaiKey=c.data().apiKey||''}catch(e){}
-if(!openaiKey&&isAdmin)document.getElementById('api-key-bar').classList.add('active');
+if(!openaiKey)document.getElementById('api-key-bar').classList.add('active');
+}
 await loadAssistants();
 }else{currentUser=null;isAdmin=false;
 document.getElementById('login-screen').classList.add('active');
@@ -570,8 +573,7 @@ container.innerHTML=`<div class="chat-welcome">
 </div>`;
 }
 window.startAssistant=function(){
-if(!currentAssistant||!openaiKey)return;
-// Send a hidden "start" message — user sees nothing, AI responds with greeting
+if(!currentAssistant)return;
 const startMsg=currentAssistant.welcome||'Почни роботу';
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
 chatHistory[currentAssistant.id].push({role:'user',content:startMsg});
@@ -580,13 +582,11 @@ const w=m.querySelector('.chat-welcome');if(w)w.remove();
 document.getElementById('chat-send').disabled=true;showTyping(true);
 (async()=>{
 try{
-const inputMsgs=[{role:'developer',content:currentAssistant.prompt||'Ти — AI-асистент.'},...chatHistory[currentAssistant.id].map(msg=>({role:msg.role,content:msg.content}))];
-const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},body:JSON.stringify({model:currentAssistant.model||'gpt-5.2',input:inputMsgs,tools:[{type:'web_search_preview'}],reasoning:{effort:'none'}})});
-if(!r.ok)throw new Error(await r.text());
+const idToken=await firebase.auth().currentUser.getIdToken();
+const r=await fetch(CHAT_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assistantId:currentAssistant.id,messages:chatHistory[currentAssistant.id].map(msg=>({role:msg.role,content:msg.content})),idToken})});
+if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error(err.detail||err.error||`Error ${r.status}`)}
 const data=await r.json();
-let reply='';
-if(data.output){for(const item of data.output){if(item.type==='message'&&item.content){for(const c of item.content){if(c.type==='output_text')reply+=c.text}}}}
-if(!reply)reply=t('no_reply');
+const reply=data.reply||t('no_reply');
 chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
 }catch(e){showTyping(false);chatHistory[currentAssistant.id].pop();appendMessage('assistant',t('error_msg'));console.error(e)}
 document.getElementById('chat-send').disabled=false;
@@ -620,19 +620,16 @@ function showTyping(s){const e=document.getElementById('typing-indicator');e.cla
 
 async function sendMessage(){
 const input=document.getElementById('chat-input'),text=input.value.trim();if(!text||!currentAssistant)return;
-if(!openaiKey){appendMessage('assistant',t('no_api_key'));return}
 input.value='';input.style.height='auto';appendMessage('user',text);
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
 chatHistory[currentAssistant.id].push({role:'user',content:text});
 document.getElementById('chat-send').disabled=true;showTyping(true);
 try{
-const inputMsgs=[{role:'developer',content:currentAssistant.prompt||'Ти — AI-асистент.'},...chatHistory[currentAssistant.id].map(m=>({role:m.role,content:m.content}))];
-const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},body:JSON.stringify({model:currentAssistant.model||'gpt-5.2',input:inputMsgs,tools:[{type:'web_search_preview'}],reasoning:{effort:'none'}})});
-if(!r.ok){const err=await r.text();throw new Error(err)}
+const idToken=await firebase.auth().currentUser.getIdToken();
+const r=await fetch(CHAT_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assistantId:currentAssistant.id,messages:chatHistory[currentAssistant.id].map(m=>({role:m.role,content:m.content})),idToken})});
+if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error(err.detail||err.error||`Error ${r.status}`)}
 const data=await r.json();
-let reply='';
-if(data.output){for(const item of data.output){if(item.type==='message'&&item.content){for(const c of item.content){if(c.type==='output_text')reply+=c.text}}}}
-if(!reply)reply=data.error?.message||t('no_reply');
+const reply=data.reply||t('no_reply');
 chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
 }catch(e){showTyping(false);chatHistory[currentAssistant.id].pop();appendMessage('assistant',t('error_msg'));console.error(e)}
 document.getElementById('chat-send').disabled=false;input.focus();
