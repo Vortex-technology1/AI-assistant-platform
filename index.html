@@ -132,7 +132,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .file-badge{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--primary-glow);border:1px solid var(--primary);border-radius:8px;font-size:12px;color:var(--primary);margin-bottom:4px;flex-shrink:0;max-width:100%;overflow:hidden}
 .file-badge.active{display:flex}
 .file-badge-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-.file-badge-remove{cursor:pointer;flex-shrink:0;opacity:.7;font-size:14px;line-height:1}
+.file-badge-remove{cursor:pointer;flex-shrink:0;opacity:.7;background:none;border:none;padding:0;display:flex;align-items:center;color:inherit;line-height:1}
 .file-badge-remove:hover{opacity:1}
 .file-attach-wrap{padding:0 0 4px;display:none}
 .file-attach-wrap.active{display:block}
@@ -396,7 +396,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 <div class="chat-messages" id="chat-messages"></div>
 <div class="typing-indicator" id="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
 <div class="file-attach-wrap" id="file-attach-wrap">
-<div class="file-badge" id="file-badge"><span class="file-badge-name" id="file-badge-name"></span><span class="file-badge-remove" id="file-badge-remove" title="Видалити файл">✕</span></div>
+<div class="file-badge" id="file-badge"><span class="file-badge-name" id="file-badge-name"></span><button class="file-badge-remove" id="file-badge-remove" title="Видалити файл"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
 </div>
 <div class="chat-input-area">
 <textarea id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Напишіть повідомлення..." rows="1"></textarea>
@@ -429,9 +429,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 <script>
 // ===== i18n =====
 const I18N={
-uk:{login_subtitle:'AI-асистенти для вашого бізнесу',password:'Пароль',login_btn:'Увійти',admin_btn:'Адмін',logout_btn:'Вийти',save_btn:'Зберегти',assistants_title:'Ваші AI-асистенти',assistants_subtitle:'Оберіть асистента для вирішення бізнес-задач',admin_title:'Управління асистентами',add_btn:'Додати',delete_title:'Видалити асистента?',delete_desc:'Цю дію неможливо скасувати',cancel_btn:'Скасувати',delete_btn:'Видалити',clear_chat:'Очистити',chat_placeholder:'Напишіть повідомлення...',no_api_key:'API ключ не налаштований. Зверніться до адміністратора.',error_msg:'Помилка. Перевірте API ключ або спробуйте ще раз.',no_reply:'Немає відповіді.',login_error:'Невірний email або пароль',fill_fields:'Введіть email та пароль',saved:'Збережено',error:'Помилка',edit_btn:'Редагувати',name_label:'Назва',icon_label:'Іконка',tag_label:'Тег',model_label:'Модель',desc_label:'Опис',welcome_label:'Привітання',prompt_label:'Системний промпт',order_label:'Порядок',or_try:'або спробуйте:',start_btn:'▶ Запустити асистента'},
-ru:{login_subtitle:'AI-ассистенты для вашего бизнеса',password:'Пароль',login_btn:'Войти',admin_btn:'Админ',logout_btn:'Выйти',save_btn:'Сохранить',assistants_title:'Ваши AI-ассистенты',assistants_subtitle:'Выберите ассистента для решения бизнес-задач',admin_title:'Управление ассистентами',add_btn:'Добавить',delete_title:'Удалить ассистента?',delete_desc:'Это действие нельзя отменить',cancel_btn:'Отмена',delete_btn:'Удалить',clear_chat:'Очистить',chat_placeholder:'Напишите сообщение...',no_api_key:'API ключ не настроен. Обратитесь к администратору.',error_msg:'Ошибка. Проверьте API ключ или попробуйте снова.',no_reply:'Нет ответа.',login_error:'Неверный email или пароль',fill_fields:'Введите email и пароль',saved:'Сохранено',error:'Ошибка',edit_btn:'Редактировать',name_label:'Название',icon_label:'Иконка',tag_label:'Тег',model_label:'Модель',desc_label:'Описание',welcome_label:'Приветствие',prompt_label:'Системный промпт',order_label:'Порядок',or_try:'или попробуйте:',start_btn:'▶ Запустить ассистента'},
-en:{login_subtitle:'AI assistants for your business',password:'Password',login_btn:'Sign In',admin_btn:'Admin',logout_btn:'Sign Out',save_btn:'Save',assistants_title:'Your AI Assistants',assistants_subtitle:'Choose an assistant to solve business tasks',admin_title:'Manage Assistants',add_btn:'Add',delete_title:'Delete assistant?',delete_desc:'This action cannot be undone',cancel_btn:'Cancel',delete_btn:'Delete',clear_chat:'Clear',chat_placeholder:'Type a message...',no_api_key:'API key not configured. Contact administrator.',error_msg:'Error. Check API key or try again.',no_reply:'No response.',login_error:'Invalid email or password',fill_fields:'Enter email and password',saved:'Saved',error:'Error',edit_btn:'Edit',name_label:'Name',icon_label:'Icon',tag_label:'Tag',model_label:'Model',desc_label:'Description',welcome_label:'Welcome',prompt_label:'System prompt',order_label:'Order',or_try:'or try:',start_btn:'▶ Start Assistant'}
+uk:{login_subtitle:'AI-асистенти для вашого бізнесу',password:'Пароль',login_btn:'Увійти',admin_btn:'Адмін',logout_btn:'Вийти',save_btn:'Зберегти',assistants_title:'Ваші AI-асистенти',assistants_subtitle:'Оберіть асистента для вирішення бізнес-задач',admin_title:'Управління асистентами',add_btn:'Додати',delete_title:'Видалити асистента?',delete_desc:'Цю дію неможливо скасувати',cancel_btn:'Скасувати',delete_btn:'Видалити',clear_chat:'Очистити',chat_placeholder:'Напишіть повідомлення...',no_api_key:'API ключ не налаштований. Зверніться до адміністратора.',error_msg:'Помилка. Перевірте API ключ або спробуйте ще раз.',no_reply:'Немає відповіді.',login_error:'Невірний email або пароль',fill_fields:'Введіть email та пароль',saved:'Збережено',error:'Помилка',edit_btn:'Редагувати',name_label:'Назва',icon_label:'Іконка',tag_label:'Тег',model_label:'Модель',desc_label:'Опис',welcome_label:'Привітання',prompt_label:'Системний промпт',order_label:'Порядок',or_try:'або спробуйте:',start_btn:'Запустити асистента'},
+ru:{login_subtitle:'AI-ассистенты для вашего бизнеса',password:'Пароль',login_btn:'Войти',admin_btn:'Админ',logout_btn:'Выйти',save_btn:'Сохранить',assistants_title:'Ваши AI-ассистенты',assistants_subtitle:'Выберите ассистента для решения бизнес-задач',admin_title:'Управление ассистентами',add_btn:'Добавить',delete_title:'Удалить ассистента?',delete_desc:'Это действие нельзя отменить',cancel_btn:'Отмена',delete_btn:'Удалить',clear_chat:'Очистить',chat_placeholder:'Напишите сообщение...',no_api_key:'API ключ не настроен. Обратитесь к администратору.',error_msg:'Ошибка. Проверьте API ключ или попробуйте снова.',no_reply:'Нет ответа.',login_error:'Неверный email или пароль',fill_fields:'Введите email и пароль',saved:'Сохранено',error:'Ошибка',edit_btn:'Редактировать',name_label:'Название',icon_label:'Иконка',tag_label:'Тег',model_label:'Модель',desc_label:'Описание',welcome_label:'Приветствие',prompt_label:'Системный промпт',order_label:'Порядок',or_try:'или попробуйте:',start_btn:'Запустить ассистента'},
+en:{login_subtitle:'AI assistants for your business',password:'Password',login_btn:'Sign In',admin_btn:'Admin',logout_btn:'Sign Out',save_btn:'Save',assistants_title:'Your AI Assistants',assistants_subtitle:'Choose an assistant to solve business tasks',admin_title:'Manage Assistants',add_btn:'Add',delete_title:'Delete assistant?',delete_desc:'This action cannot be undone',cancel_btn:'Cancel',delete_btn:'Delete',clear_chat:'Clear',chat_placeholder:'Type a message...',no_api_key:'API key not configured. Contact administrator.',error_msg:'Error. Check API key or try again.',no_reply:'No response.',login_error:'Invalid email or password',fill_fields:'Enter email and password',saved:'Saved',error:'Error',edit_btn:'Edit',name_label:'Name',icon_label:'Icon',tag_label:'Tag',model_label:'Model',desc_label:'Description',welcome_label:'Welcome',prompt_label:'System prompt',order_label:'Order',or_try:'or try:',start_btn:'Start Assistant'}
 };
 let currentLang='uk';
 function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||I18N.uk[key]||key}
@@ -616,7 +616,7 @@ container.innerHTML=`<div class="chat-welcome">
 <div class="welcome-icon">${getIcon(currentAssistant.icon||'bolt')}</div>
 <h3>${currentAssistant.name}</h3>
 <p>${currentAssistant.welcome||'...'}</p>
-<button class="start-btn" onclick="startAssistant()">${t('start_btn')}</button>
+<button class="start-btn" onclick="startAssistant()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="flex-shrink:0"><polygon points="5 3 19 12 5 21 5 3"/></svg>${t('start_btn')}</button>
 </div>`;
 }
 let _startAssistantRunning=false;
@@ -732,7 +732,7 @@ const attached = window.getAttachedFile ? window.getAttachedFile() : null;
 const fullText = attached
   ? `[Файл: ${attached.name}]\n\n${attached.text}\n\n---\n${text}`
   : text;
-input.value='';input.style.height='auto';appendMessage('user', attached ? `📎 ${attached.name}\n${text}` : text);
+input.value='';input.style.height='auto';appendMessage('user', attached ? `[файл: ${attached.name}]\n${text}` : text);
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
 chatHistory[currentAssistant.id].push({role:'user',content:fullText});
 if(attached && window.clearAttachedFile) window.clearAttachedFile();
@@ -1018,7 +1018,7 @@ window.copyMsg = function(btn, encodedText) {
 let currentView='assistants';
 document.getElementById('admin-toggle').addEventListener('click',()=>{
 if(currentView==='admin'){document.getElementById('admin-view').classList.remove('active');document.getElementById('assistants-view').style.display='';document.getElementById('chat-view').classList.remove('active');document.getElementById('admin-toggle').textContent=t('admin_btn');currentView='assistants'}
-else{document.getElementById('admin-view').classList.add('active');document.getElementById('assistants-view').style.display='none';document.getElementById('chat-view').classList.remove('active');document.getElementById('admin-toggle').textContent='← '+t('admin_btn');currentView='admin';renderAdminList()}
+else{document.getElementById('admin-view').classList.add('active');document.getElementById('assistants-view').style.display='none';document.getElementById('chat-view').classList.remove('active');document.getElementById('admin-toggle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="m15 18-6-6 6-6"/></svg>'+t('admin_btn');currentView='admin';renderAdminList()}
 });
 
 function renderIconSelector(sel,inputId){
