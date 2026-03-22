@@ -125,6 +125,41 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .chat-mic-btn.processing{opacity:0.5;cursor:not-allowed}
 @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,50,50,0.3)}50%{box-shadow:0 0 0 6px rgba(220,50,50,0)}}
 
+/* === FILE UPLOAD BUTTON === */
+.chat-file-btn{width:44px;height:44px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;color:var(--text-secondary)}
+.chat-file-btn:hover{border-color:var(--primary);color:var(--primary)}
+.chat-file-btn:disabled{opacity:0.4;cursor:not-allowed}
+.file-badge{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--primary-glow);border:1px solid var(--primary);border-radius:8px;font-size:12px;color:var(--primary);margin-bottom:4px;flex-shrink:0;max-width:100%;overflow:hidden}
+.file-badge.active{display:flex}
+.file-badge-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.file-badge-remove{cursor:pointer;flex-shrink:0;opacity:.7;font-size:14px;line-height:1}
+.file-badge-remove:hover{opacity:1}
+.file-attach-wrap{padding:0 0 4px;display:none}
+.file-attach-wrap.active{display:block}
+
+/* === TTS BUTTON on AI messages === */
+.msg-actions{display:flex;gap:4px;margin-top:4px;opacity:0;transition:opacity .2s}
+.message:hover .msg-actions{opacity:1}
+.msg-action-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);transition:all .15s}
+.msg-action-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
+.msg-action-btn.playing{border-color:var(--primary);color:var(--primary);background:var(--primary-glow);animation:micPulse 1.5s ease-in-out infinite}
+.msg-action-btn svg{width:14px;height:14px}
+
+/* === IMPROVED MARKDOWN in bubbles === */
+.message-bubble h1,.message-bubble h2,.message-bubble h3{font-weight:600;margin:.6em 0 .3em;line-height:1.3}
+.message-bubble h1{font-size:1.1em}
+.message-bubble h2{font-size:1.05em}
+.message-bubble h3{font-size:1em}
+.message-bubble ul,.message-bubble ol{margin:.4em 0 .4em 1.2em;padding:0}
+.message-bubble li{margin:.15em 0;line-height:1.5}
+.message-bubble hr{border:none;border-top:1px solid var(--border);margin:.6em 0}
+.message-bubble table{border-collapse:collapse;width:100%;margin:.5em 0;font-size:12px}
+.message-bubble th,.message-bubble td{border:1px solid var(--border);padding:5px 8px;text-align:left}
+.message-bubble th{background:var(--bg-hover);font-weight:600}
+.message-bubble blockquote{border-left:3px solid var(--primary);margin:.4em 0;padding:.2em .6em .2em .8em;color:var(--text-secondary);font-style:italic}
+.message-bubble pre{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:.5em 0}
+.message-bubble pre code{background:none;padding:0;font-size:12px;border-radius:0}
+
 /* === API KEY BAR === */
 .api-key-bar{display:none;padding:10px 14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin:10px 0;gap:8px;align-items:center;flex-wrap:wrap}
 .api-key-bar.active{display:flex}
@@ -224,7 +259,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .message-bubble{padding:9px 12px;font-size:14px;border-radius:12px;line-height:1.55}
 .message.user .message-bubble{border-bottom-right-radius:3px}
 .message.assistant .message-bubble{border-bottom-left-radius:3px}
-.chat-input-area{padding:8px 0;padding-bottom:calc(8px + var(--safe-bottom));gap:6px}
+.file-attach-wrap{padding:0 0 2px}.chat-input-area{padding:8px 0;padding-bottom:calc(8px + var(--safe-bottom));gap:6px}
 .chat-input-area textarea{padding:10px 12px;border-radius:10px;min-height:40px;font-size:16px}
 .chat-send-btn{width:40px;height:40px;border-radius:10px}.chat-mic-btn{width:40px;height:40px;border-radius:10px}
 .start-btn{padding:12px 24px;font-size:14px;border-radius:10px}
@@ -360,8 +395,13 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 </div>
 <div class="chat-messages" id="chat-messages"></div>
 <div class="typing-indicator" id="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+<div class="file-attach-wrap" id="file-attach-wrap">
+<div class="file-badge" id="file-badge"><span class="file-badge-name" id="file-badge-name"></span><span class="file-badge-remove" id="file-badge-remove" title="Видалити файл">✕</span></div>
+</div>
 <div class="chat-input-area">
 <textarea id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Напишіть повідомлення..." rows="1"></textarea>
+<button class="chat-file-btn" id="chat-file" title="Прикріпити файл (PDF, DOCX, TXT)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
+<input type="file" id="file-input" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display:none">
 <button class="chat-mic-btn" id="chat-mic" title="Голосовий ввід"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
 <button class="chat-send-btn" id="chat-send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
 </div>
@@ -455,6 +495,8 @@ let currentUser=null,isAdmin=false,currentAssistant=null,chatHistory={},openaiKe
 // ── Cloud Function URL (replace YOUR-PROJECT-ID after deploy) ──
 const CHAT_FUNCTION_URL='https://chat-342266457067.europe-west1.run.app';
 const TRANSCRIBE_FUNCTION_URL='https://transcribe-342266457067.europe-west1.run.app';
+const TTS_FUNCTION_URL='https://tts-342266457067.europe-west1.run.app';
+const PARSEFILE_FUNCTION_URL='https://parsefile-342266457067.europe-west1.run.app';
 
 const DEFAULT_ASSISTANTS=[
 {name:"Генератор розпоряджень",icon:"clipboard",description:"Генерує чіткі розпорядження за 30 секунд. Підлеглі перестануть перепитувати",tag:"Управління",model:"gpt-5.2",prompt:"Ти — AI-асистент TALKO System 'Генератор чітких розпоряджень'. Твоя задача — перетворювати нечіткі побажання керівника у структуроване розпорядження.\n\nФОРМАТ РОЗПОРЯДЖЕННЯ:\n1. ЗАДАЧА: (що конкретно зробити — одне речення)\n2. РЕЗУЛЬТАТ: (що має бути на виході — вимірюваний продукт)\n3. ДЕДЛАЙН: (конкретна дата та час)\n4. ВІДПОВІДАЛЬНИЙ: (хто виконує)\n5. РЕСУРСИ: (що потрібно для виконання)\n6. КОНТРОЛЬНЕ ПИТАННЯ: (як перевірити що зроблено правильно)\n7. ЩО РОБИТИ ЯКЩО: (якщо виникне проблема — до кого звертатись)\n\nПРАВИЛА:\n- Завжди перепитуй якщо не вистачає інформації\n- Використовуй конкретні дієслова: 'підготувати', 'надіслати', 'зібрати'\n- Результат завжди вимірюваний: документ, файл, звіт, список\n- Якщо керівник каже розмито — запропонуй 2-3 варіанти конкретизації\n- Відповідай мовою користувача",welcome:"Опишіть задачу — я сформую чітке розпорядження за 30 секунд.",order:0},
@@ -610,19 +652,74 @@ const m=document.getElementById('chat-messages');m.innerHTML='';
 renderWelcome(m);
 });
 
+// ── Markdown renderer ──
+function renderMarkdown(raw){
+  // Escape HTML first, then apply markdown patterns
+  let s = raw
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+
+  // Code blocks (``` ```) — replace before inline code
+  s = s.replace(/```([\s\S]*?)```/g,(_,c)=>`<pre><code>${c.trim()}</code></pre>`);
+  // Inline code
+  s = s.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  // Tables: lines with | pipe
+  s = s.replace(/((?:(?:[^\n]*\|[^\n]*)\n?)+)/g, block => {
+    const rows = block.trim().split('\n').filter(r => r.includes('|'));
+    if(rows.length < 2) return block;
+    const isSep = r => /^[\s|:-]+$/.test(r);
+    const parseRow = r => r.replace(/^\s*\|?|\|?\s*$/g,'').split('|').map(c=>`<td>${c.trim()}</td>`).join('');
+    const parseHeader = r => r.replace(/^\s*\|?|\|?\s*$/g,'').split('|').map(c=>`<th>${c.trim()}</th>`).join('');
+    if(rows.length >= 2 && isSep(rows[1])){
+      const head = `<tr>${parseHeader(rows[0])}</tr>`;
+      const body = rows.slice(2).map(r=>`<tr>${parseRow(r)}</tr>`).join('');
+      return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+    }
+    return block;
+  });
+  // Headings
+  s = s.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  // Bold & italic
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+  // Blockquote
+  s = s.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+  // HR
+  s = s.replace(/^---+$/gm,'<hr>');
+  // Unordered lists (greedy grouping)
+  s = s.replace(/((?:^[-*+] .+\n?)+)/gm, block => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^[-*+] /,'').trim()}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+  // Ordered lists
+  s = s.replace(/((?:^\d+\. .+\n?)+)/gm, block => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /,'').trim()}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+  // Line breaks (double newline → paragraph gap)
+  s = s.replace(/\n\n/g,'<br><br>');
+  s = s.replace(/\n/g,'<br>');
+  return s;
+}
+
 function appendMessage(role,content,animate=true){
 const m=document.getElementById('chat-messages'),w=m.querySelector('.chat-welcome');if(w)w.remove();
 const d=document.createElement('div');d.className=`message ${role==='user'?'user':'assistant'}`;
 if(!animate)d.style.animation='none';
 const tm=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
-let h=escapeHtml(content);
-h=h.replace(/\n/g,'<br>');
-h=h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-h=h.replace(/`([^`]+)`/g,'<code style="background:var(--primary-glow);padding:2px 6px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:12px">$1</code>');
-d.innerHTML=`<div class="message-bubble">${h}</div><div class="message-time">${tm}</div>`;
+const html = role==='assistant' ? renderMarkdown(content) : escapeHtml(content).replace(/\n/g,'<br>');
+// Actions: copy + TTS (only for assistant)
+const actions = role==='assistant' ? `<div class="msg-actions">
+  <button class="msg-action-btn tts-btn" title="Прослухати" onclick="playTTS(this,'${encodeURIComponent(content)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg></button>
+  <button class="msg-action-btn copy-btn" title="Копіювати" onclick="copyMsg(this,'${encodeURIComponent(content)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+</div>` : '';
+d.innerHTML=`<div class="message-bubble">${html}</div><div class="message-time">${tm}</div>${actions}`;
 m.appendChild(d);scrollToBottom();
 }
-function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function escapeHtml(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
 function scrollToBottom(){const e=document.getElementById('chat-messages');e.scrollTop=e.scrollHeight}
 function showTyping(s){const e=document.getElementById('typing-indicator');e.classList.toggle('active',s);if(s)scrollToBottom()}
 
@@ -630,9 +727,15 @@ let _sendRunning=false;
 async function sendMessage(){
 const input=document.getElementById('chat-input'),text=input.value.trim();if(!text||!currentAssistant||_sendRunning)return;
 _sendRunning=true;
-input.value='';input.style.height='auto';appendMessage('user',text);
+// Inject file context if attached
+const attached = window.getAttachedFile ? window.getAttachedFile() : null;
+const fullText = attached
+  ? `[Файл: ${attached.name}]\n\n${attached.text}\n\n---\n${text}`
+  : text;
+input.value='';input.style.height='auto';appendMessage('user', attached ? `📎 ${attached.name}\n${text}` : text);
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
-chatHistory[currentAssistant.id].push({role:'user',content:text});
+chatHistory[currentAssistant.id].push({role:'user',content:fullText});
+if(attached && window.clearAttachedFile) window.clearAttachedFile();
 document.getElementById('chat-send').disabled=true;showTyping(true);
 try{
 const idToken=await firebase.auth().currentUser.getIdToken();
@@ -647,6 +750,141 @@ _sendRunning=false;document.getElementById('chat-send').disabled=false;input.foc
 document.getElementById('chat-send').addEventListener('click',sendMessage);
 document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 document.getElementById('chat-input').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'});
+
+
+// ===== TTS (Text-to-Speech) =====
+let _currentAudio = null;
+let _currentTtsBtn = null;
+
+window.playTTS = async function(btn, encodedText) {
+  const text = decodeURIComponent(encodedText);
+  // If already playing this message — stop
+  if(_currentAudio && !_currentAudio.paused) {
+    _currentAudio.pause();
+    _currentAudio = null;
+    if(_currentTtsBtn) { _currentTtsBtn.classList.remove('playing'); _currentTtsBtn = null; }
+    if(btn.classList.contains('playing') === false) return; // was different btn — fall through to play
+    return;
+  }
+  // Stop any previous
+  if(_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
+  if(_currentTtsBtn) { _currentTtsBtn.classList.remove('playing'); }
+
+  btn.classList.add('playing');
+  _currentTtsBtn = btn;
+
+  try {
+    const user = firebase.auth().currentUser;
+    if(!user) { btn.classList.remove('playing'); return; }
+    const idToken = await user.getIdToken();
+
+    const resp = await fetch(TTS_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-id-token': idToken },
+      body: JSON.stringify({ text, voice: 'nova', idToken })
+    });
+
+    if(!resp.ok) { btn.classList.remove('playing'); showToast('TTS недоступний'); return; }
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    _currentAudio = new Audio(url);
+    _currentAudio.onended = () => { btn.classList.remove('playing'); _currentTtsBtn = null; URL.revokeObjectURL(url); };
+    _currentAudio.onerror = () => { btn.classList.remove('playing'); _currentTtsBtn = null; };
+    await _currentAudio.play();
+  } catch(e) {
+    console.error('TTS error:', e);
+    btn.classList.remove('playing');
+    _currentTtsBtn = null;
+  }
+};
+
+window.copyMsg = function(btn, encodedText) {
+  const text = decodeURIComponent(encodedText);
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => { btn.innerHTML = orig; }, 1500);
+  }).catch(() => showToast('Не вдалося скопіювати'));
+};
+
+// ===== FILE UPLOAD =====
+(function(){
+  let attachedFile = null; // { name, text }
+
+  const fileBtn = document.getElementById('chat-file');
+  const fileInput = document.getElementById('file-input');
+  const fileBadge = document.getElementById('file-badge');
+  const fileBadgeName = document.getElementById('file-badge-name');
+  const fileBadgeRemove = document.getElementById('file-badge-remove');
+  const fileWrap = document.getElementById('file-attach-wrap');
+
+  if(!fileBtn) return;
+
+  fileBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if(!file) return;
+    fileInput.value = '';
+
+    const MAX_SIZE = 20 * 1024 * 1024;
+    if(file.size > MAX_SIZE) { showToast('Файл занадто великий (макс 20MB)'); return; }
+
+    fileBtn.disabled = true;
+    showToast('Обробка файлу...');
+
+    try {
+      const user = firebase.auth().currentUser;
+      if(!user) { fileBtn.disabled = false; return; }
+      const idToken = await user.getIdToken();
+
+      const arrayBuffer = await file.arrayBuffer();
+      const resp = await fetch(PARSEFILE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+          'x-id-token': idToken,
+          'x-filename': encodeURIComponent(file.name)
+        },
+        body: arrayBuffer
+      });
+
+      if(!resp.ok) {
+        const err = await resp.json().catch(()=>({}));
+        showToast('Помилка: ' + (err.error || resp.status));
+        fileBtn.disabled = false;
+        return;
+      }
+
+      const data = await resp.json();
+      attachedFile = { name: file.name, text: data.text, truncated: data.truncated };
+
+      fileBadgeName.textContent = file.name + (data.truncated ? ' (обрізано)' : '');
+      fileBadge.classList.add('active');
+      fileWrap.classList.add('active');
+      showToast(data.truncated ? 'Файл завантажено (перші 12000 символів)' : 'Файл завантажено');
+    } catch(e) {
+      console.error('File upload error:', e);
+      showToast('Помилка завантаження файлу');
+    }
+    fileBtn.disabled = false;
+  });
+
+  fileBadgeRemove.addEventListener('click', () => {
+    attachedFile = null;
+    fileBadge.classList.remove('active');
+    fileWrap.classList.remove('active');
+  });
+
+  // Expose getter so sendMessage can use it
+  window.getAttachedFile = () => attachedFile;
+  window.clearAttachedFile = () => {
+    attachedFile = null;
+    fileBadge.classList.remove('active');
+    fileWrap.classList.remove('active');
+  };
+})();
 
 // ===== WHISPER VOICE INPUT =====
 (function(){
