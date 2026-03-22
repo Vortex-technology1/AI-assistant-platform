@@ -119,6 +119,11 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .chat-send-btn:hover{transform:scale(1.05)}.chat-send-btn:active{transform:scale(0.92)}
 .chat-send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
 .chat-send-btn svg{width:20px;height:20px}
+.chat-mic-btn{width:44px;height:44px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;color:var(--text-secondary)}
+.chat-mic-btn:hover{border-color:var(--primary);color:var(--primary)}
+.chat-mic-btn.recording{background:rgba(220,50,50,0.15);border-color:#dc3232;color:#dc3232;animation:micPulse 1s ease-in-out infinite}
+.chat-mic-btn.processing{opacity:0.5;cursor:not-allowed}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,50,50,0.3)}50%{box-shadow:0 0 0 6px rgba(220,50,50,0)}}
 
 /* === API KEY BAR === */
 .api-key-bar{display:none;padding:10px 14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin:10px 0;gap:8px;align-items:center;flex-wrap:wrap}
@@ -357,6 +362,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 <div class="typing-indicator" id="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
 <div class="chat-input-area">
 <textarea id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Напишіть повідомлення..." rows="1"></textarea>
+<button class="chat-mic-btn" id="chat-mic" title="Голосовий ввід"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
 <button class="chat-send-btn" id="chat-send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
 </div>
 </div>
@@ -448,6 +454,7 @@ const auth=firebase.auth(),db=firebase.firestore();
 let currentUser=null,isAdmin=false,currentAssistant=null,chatHistory={},openaiKey='',assistantsData=[];
 // ── Cloud Function URL (replace YOUR-PROJECT-ID after deploy) ──
 const CHAT_FUNCTION_URL='https://chat-342266457067.europe-west1.run.app';
+const TRANSCRIBE_FUNCTION_URL='https://transcribe-342266457067.europe-west1.run.app';
 
 const DEFAULT_ASSISTANTS=[
 {name:"Генератор розпоряджень",icon:"clipboard",description:"Генерує чіткі розпорядження за 30 секунд. Підлеглі перестануть перепитувати",tag:"Управління",model:"gpt-5.2",prompt:"Ти — AI-асистент TALKO System 'Генератор чітких розпоряджень'. Твоя задача — перетворювати нечіткі побажання керівника у структуроване розпорядження.\n\nФОРМАТ РОЗПОРЯДЖЕННЯ:\n1. ЗАДАЧА: (що конкретно зробити — одне речення)\n2. РЕЗУЛЬТАТ: (що має бути на виході — вимірюваний продукт)\n3. ДЕДЛАЙН: (конкретна дата та час)\n4. ВІДПОВІДАЛЬНИЙ: (хто виконує)\n5. РЕСУРСИ: (що потрібно для виконання)\n6. КОНТРОЛЬНЕ ПИТАННЯ: (як перевірити що зроблено правильно)\n7. ЩО РОБИТИ ЯКЩО: (якщо виникне проблема — до кого звертатись)\n\nПРАВИЛА:\n- Завжди перепитуй якщо не вистачає інформації\n- Використовуй конкретні дієслова: 'підготувати', 'надіслати', 'зібрати'\n- Результат завжди вимірюваний: документ, файл, звіт, список\n- Якщо керівник каже розмито — запропонуй 2-3 варіанти конкретизації\n- Відповідай мовою користувача",welcome:"Опишіть задачу — я сформую чітке розпорядження за 30 секунд.",order:0},
@@ -635,6 +642,121 @@ document.getElementById('chat-send').disabled=false;input.focus();
 document.getElementById('chat-send').addEventListener('click',sendMessage);
 document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 document.getElementById('chat-input').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'});
+
+// ===== WHISPER VOICE INPUT =====
+(function(){
+  const micBtn = document.getElementById('chat-mic');
+  if(!micBtn) return;
+
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let isRecording = false;
+
+  // Choose best supported MIME type
+  function getMimeType(){
+    const types = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg'];
+    for(const t of types){ if(MediaRecorder.isTypeSupported(t)) return t; }
+    return '';
+  }
+
+  async function startRecording(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const mimeType = getMimeType();
+      const opts = mimeType ? {mimeType} : {};
+      mediaRecorder = new MediaRecorder(stream, opts);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = () => { stream.getTracks().forEach(t=>t.stop()); sendToWhisper(); };
+
+      mediaRecorder.start(250); // collect chunks every 250ms
+      isRecording = true;
+      micBtn.classList.add('recording');
+      micBtn.title = 'Зупинити запис';
+    } catch(err){
+      console.error('Mic error:', err);
+      if(err.name==='NotAllowedError'){
+        alert('Дозвольте доступ до мікрофону в налаштуваннях браузера');
+      } else {
+        alert('Помилка мікрофону: ' + err.message);
+      }
+    }
+  }
+
+  function stopRecording(){
+    if(mediaRecorder && isRecording){
+      mediaRecorder.stop();
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      micBtn.classList.add('processing');
+      micBtn.title = 'Обробка...';
+    }
+  }
+
+  async function sendToWhisper(){
+    if(audioChunks.length === 0){ resetMic(); return; }
+
+    const mimeType = getMimeType() || 'audio/webm';
+    const blob = new Blob(audioChunks, {type: mimeType});
+    if(blob.size < 1000){ resetMic(); return; } // too short / empty
+
+    try{
+      const user = firebase.auth().currentUser;
+      if(!user){ resetMic(); return; }
+      const idToken = await user.getIdToken();
+
+      // Detect UI language for transcription hint
+      const lang = document.documentElement.lang || 'uk';
+
+      const resp = await fetch(TRANSCRIBE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': mimeType,
+          'x-id-token': idToken,
+          'x-lang': lang
+        },
+        body: blob
+      });
+
+      if(!resp.ok){
+        const err = await resp.json().catch(()=>({}));
+        console.error('Whisper error:', err);
+        alert('Помилка розпізнавання: ' + (err.detail || err.error || resp.status));
+        resetMic(); return;
+      }
+
+      const data = await resp.json();
+      const text = (data.text || '').trim();
+
+      if(text){
+        const input = document.getElementById('chat-input');
+        // Append to existing text if any, otherwise replace
+        input.value = input.value ? input.value + ' ' + text : text;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+        input.focus();
+        // Auto-send
+        sendMessage();
+      }
+    } catch(err){
+      console.error('Transcription fetch error:', err);
+      alert('Помилка підключення до Whisper');
+    }
+    resetMic();
+  }
+
+  function resetMic(){
+    micBtn.classList.remove('recording','processing');
+    micBtn.title = 'Голосовий ввід';
+    micBtn.disabled = false;
+  }
+
+  micBtn.addEventListener('click', ()=>{
+    if(isRecording){ stopRecording(); }
+    else { startRecording(); }
+  });
+})();
 
 // ===== ADMIN =====
 let currentView='assistants';

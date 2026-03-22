@@ -2,6 +2,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
+const FormData = require("form-data");
 
 initializeApp();
 const db = getFirestore();
@@ -129,6 +130,96 @@ exports.chat = onRequest(
       });
     } catch (err) {
       console.error("Chat function error:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+/**
+ * TALKO AI Platform — Whisper Transcription
+ *
+ * Client sends: multipart/form-data { audio: <webm/ogg blob>, idToken, lang? }
+ * Function loads API key from Firestore → calls Whisper → returns { text }
+ */
+exports.transcribe = onRequest(
+  {
+    cors: true,
+    region: "europe-west1",
+    memory: "256MiB",
+    timeoutSeconds: 60,
+    maxInstances: 20,
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    try {
+      const idToken = req.headers["x-id-token"];
+      if (!idToken) {
+        return res.status(400).json({ error: "Missing x-id-token header" });
+      }
+
+      // ── 1. Verify Firebase Auth ──
+      try {
+        await getAuth().verifyIdToken(idToken);
+      } catch {
+        return res.status(401).json({ error: "Invalid auth token" });
+      }
+
+      // ── 2. Load API key ──
+      const configDoc = await db.collection("config").doc("openai").get();
+      if (!configDoc.exists || !configDoc.data().apiKey) {
+        return res.status(500).json({ error: "API key not configured" });
+      }
+      const openaiKey = configDoc.data().apiKey;
+
+      // ── 3. Get raw audio bytes from request ──
+      // Firebase Functions v2 exposes rawBody as Buffer
+      const audioBuffer = req.rawBody;
+      if (!audioBuffer || audioBuffer.length === 0) {
+        return res.status(400).json({ error: "Empty audio body" });
+      }
+
+      const lang = req.headers["x-lang"] || "uk"; // default Ukrainian
+      const mimeType = req.headers["content-type"] || "audio/webm";
+      const ext = mimeType.includes("ogg") ? "ogg" : "webm";
+
+      // ── 4. Build multipart form for Whisper ──
+      const form = new FormData();
+      form.append("file", audioBuffer, {
+        filename: `audio.${ext}`,
+        contentType: mimeType,
+      });
+      form.append("model", "whisper-1");
+      form.append("language", lang);
+
+      // ── 5. Call Whisper API ──
+      const whisperRes = await fetch(
+        "https://api.openai.com/v1/audio/transcriptions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${openaiKey}`,
+            ...form.getHeaders(),
+          },
+          body: form.getBuffer(),
+        }
+      );
+
+      if (!whisperRes.ok) {
+        const errData = await whisperRes.json().catch(() => ({}));
+        console.error("Whisper error:", whisperRes.status, errData);
+        return res.status(502).json({
+          error: "Whisper error",
+          detail: errData?.error?.message || `Status ${whisperRes.status}`,
+        });
+      }
+
+      const data = await whisperRes.json();
+      return res.status(200).json({ text: data.text || "" });
+    } catch (err) {
+      console.error("Transcribe function error:", err);
       return res.status(500).json({ error: "Internal server error" });
     }
   }
