@@ -64,22 +64,22 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .main-content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 
 /* === ASSISTANTS GRID === */
-.assistants-view{padding:24px 20px;padding-bottom:calc(24px + var(--safe-bottom));max-width:960px;margin:0 auto;width:100%}
-.assistants-header{margin-bottom:24px;animation:fadeIn .4s ease;text-align:center}
-.assistants-header h3{font-size:21px;font-weight:700;margin-bottom:4px}
-.assistants-header p{color:var(--text-secondary);font-size:14px}
-.assistants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-.assistant-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s ease;animation:fadeIn .4s ease backwards;position:relative;overflow:hidden;box-shadow:var(--shadow-card);-webkit-user-select:none;user-select:none}
+.assistants-view{padding:16px 20px;padding-bottom:calc(16px + var(--safe-bottom));max-width:960px;margin:0 auto;width:100%}
+.assistants-header{margin-bottom:14px;animation:fadeIn .4s ease;text-align:center}
+.assistants-header h3{font-size:18px;font-weight:700;margin-bottom:2px}
+.assistants-header p{color:var(--text-secondary);font-size:13px}
+.assistants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.assistant-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s ease;animation:fadeIn .4s ease backwards;position:relative;overflow:hidden;box-shadow:var(--shadow-card);-webkit-user-select:none;user-select:none}
 .assistant-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),transparent);opacity:0;transition:opacity .2s}
 .assistant-card:hover{transform:translateY(-2px);border-color:var(--primary);box-shadow:0 8px 24px rgba(34,197,94,0.1)}.assistant-card:hover::before{opacity:1}
 .assistant-card:active{transform:scale(0.98);transition:transform .1s}
-.assistant-card-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.assistant-avatar{width:42px;height:42px;background:var(--primary-glow);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.assistant-avatar svg{width:21px;height:21px;stroke:var(--primary)}
-.assistant-card h4{font-size:14px;font-weight:600;line-height:1.3}
-.assistant-card-desc{font-size:13px;color:var(--text-secondary);line-height:1.45;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.assistant-card-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.assistant-avatar{width:34px;height:34px;background:var(--primary-glow);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.assistant-avatar svg{width:17px;height:17px;stroke:var(--primary)}
+.assistant-card h4{font-size:13px;font-weight:600;line-height:1.3}
+.assistant-card-desc{font-size:12px;color:var(--text-secondary);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .assistant-card-footer{display:flex;align-items:center;justify-content:space-between}
-.assistant-tag{font-size:11px;padding:3px 10px;background:var(--primary-glow);color:var(--primary);border-radius:20px;font-weight:500}
+.assistant-tag{font-size:10px;padding:2px 8px;background:var(--primary-glow);color:var(--primary);border-radius:20px;font-weight:500}
 .assistant-arrow{color:var(--text-muted);transition:transform .2s}.assistant-card:hover .assistant-arrow{transform:translateX(4px);color:var(--primary)}
 
 /* === CHAT === */
@@ -321,7 +321,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 /* DESKTOP: 1024-1439px */
 @media(min-width:1024px){
 .assistants-view{padding:32px 32px;max-width:1000px}
-.assistants-grid{grid-template-columns:repeat(3,1fr);gap:14px}
+.assistants-grid{grid-template-columns:repeat(4,1fr);gap:8px}
 .chat-view{max-width:840px;padding:0 24px}
 .admin-view{max-width:860px;padding:28px 32px}
 .top-bar{padding:12px 32px}
