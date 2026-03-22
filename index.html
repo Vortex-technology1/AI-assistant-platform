@@ -86,9 +86,11 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .chat-view{display:none;flex-direction:column;height:100%;max-width:800px;margin:0 auto;width:100%;padding:0 16px;overflow:hidden}
 .chat-view.active{display:flex}
 .chat-header{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);flex-shrink:0}
-.chat-back{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--text-secondary);transition:all .15s;flex-shrink:0;min-height:36px}
-.chat-back:hover{border-color:var(--primary);color:var(--primary)}
+.chat-back{display:flex;align-items:center;gap:6px;padding:0 12px;height:36px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--text-secondary);transition:all .15s;flex-shrink:0;min-height:36px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500}
+.chat-back:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
 .chat-back:active{transform:scale(0.9)}
+.chat-back-label{display:none}
+@media(min-width:480px){.chat-back-label{display:inline}}
 .chat-avatar-sm{width:38px;height:38px;background:var(--primary-glow);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .chat-avatar-sm svg{width:19px;height:19px;stroke:var(--primary)}
 .chat-info{min-width:0;flex:1}
@@ -406,7 +408,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 </div>
 <div class="chat-view" id="chat-view">
 <div class="chat-header">
-<button class="chat-back" id="chat-back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+<button class="chat-back" id="chat-back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span class="chat-back-label" data-i18n="back_btn">Назад</span></button>
 <div class="chat-avatar-sm" id="chat-avatar"></div>
 <div class="chat-info"><h4 id="chat-name"></h4><span id="chat-desc"></span></div>
 <div class="chat-header-right"><button class="tb-btn" id="chat-clear" data-i18n="clear_chat">Очистити</button></div>
@@ -455,9 +457,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 <script>
 // ===== i18n =====
 const I18N={
-uk:{login_subtitle:'AI-асистенти для вашого бізнесу',password:'Пароль',login_btn:'Увійти',admin_btn:'Адмін',logout_btn:'Вийти',save_btn:'Зберегти',assistants_title:'Ваші AI-асистенти',assistants_subtitle:'Оберіть асистента для вирішення бізнес-задач',admin_title:'Управління асистентами',add_btn:'Додати',delete_title:'Видалити асистента?',delete_desc:'Цю дію неможливо скасувати',cancel_btn:'Скасувати',delete_btn:'Видалити',clear_chat:'Очистити',chat_placeholder:'Напишіть повідомлення...',no_api_key:'API ключ не налаштований. Зверніться до адміністратора.',error_msg:'Помилка. Перевірте API ключ або спробуйте ще раз.',no_reply:'Немає відповіді.',login_error:'Невірний email або пароль',fill_fields:'Введіть email та пароль',saved:'Збережено',error:'Помилка',edit_btn:'Редагувати',name_label:'Назва',icon_label:'Іконка',tag_label:'Тег',model_label:'Модель',desc_label:'Опис',welcome_label:'Привітання',prompt_label:'Системний промпт',order_label:'Порядок',or_try:'або спробуйте:',start_btn:'Запустити асистента'},
-ru:{login_subtitle:'AI-ассистенты для вашего бизнеса',password:'Пароль',login_btn:'Войти',admin_btn:'Админ',logout_btn:'Выйти',save_btn:'Сохранить',assistants_title:'Ваши AI-ассистенты',assistants_subtitle:'Выберите ассистента для решения бизнес-задач',admin_title:'Управление ассистентами',add_btn:'Добавить',delete_title:'Удалить ассистента?',delete_desc:'Это действие нельзя отменить',cancel_btn:'Отмена',delete_btn:'Удалить',clear_chat:'Очистить',chat_placeholder:'Напишите сообщение...',no_api_key:'API ключ не настроен. Обратитесь к администратору.',error_msg:'Ошибка. Проверьте API ключ или попробуйте снова.',no_reply:'Нет ответа.',login_error:'Неверный email или пароль',fill_fields:'Введите email и пароль',saved:'Сохранено',error:'Ошибка',edit_btn:'Редактировать',name_label:'Название',icon_label:'Иконка',tag_label:'Тег',model_label:'Модель',desc_label:'Описание',welcome_label:'Приветствие',prompt_label:'Системный промпт',order_label:'Порядок',or_try:'или попробуйте:',start_btn:'Запустить ассистента'},
-en:{login_subtitle:'AI assistants for your business',password:'Password',login_btn:'Sign In',admin_btn:'Admin',logout_btn:'Sign Out',save_btn:'Save',assistants_title:'Your AI Assistants',assistants_subtitle:'Choose an assistant to solve business tasks',admin_title:'Manage Assistants',add_btn:'Add',delete_title:'Delete assistant?',delete_desc:'This action cannot be undone',cancel_btn:'Cancel',delete_btn:'Delete',clear_chat:'Clear',chat_placeholder:'Type a message...',no_api_key:'API key not configured. Contact administrator.',error_msg:'Error. Check API key or try again.',no_reply:'No response.',login_error:'Invalid email or password',fill_fields:'Enter email and password',saved:'Saved',error:'Error',edit_btn:'Edit',name_label:'Name',icon_label:'Icon',tag_label:'Tag',model_label:'Model',desc_label:'Description',welcome_label:'Welcome',prompt_label:'System prompt',order_label:'Order',or_try:'or try:',start_btn:'Start Assistant'}
+uk:{login_subtitle:'AI-асистенти для вашого бізнесу',password:'Пароль',login_btn:'Увійти',admin_btn:'Адмін',logout_btn:'Вийти',save_btn:'Зберегти',assistants_title:'Ваші AI-асистенти',assistants_subtitle:'Оберіть асистента для вирішення бізнес-задач',admin_title:'Управління асистентами',add_btn:'Додати',delete_title:'Видалити асистента?',delete_desc:'Цю дію неможливо скасувати',cancel_btn:'Скасувати',delete_btn:'Видалити',back_btn:'Назад',clear_chat:'Очистити',chat_placeholder:'Напишіть повідомлення...',no_api_key:'API ключ не налаштований. Зверніться до адміністратора.',error_msg:'Помилка. Перевірте API ключ або спробуйте ще раз.',no_reply:'Немає відповіді.',login_error:'Невірний email або пароль',fill_fields:'Введіть email та пароль',saved:'Збережено',error:'Помилка',edit_btn:'Редагувати',name_label:'Назва',icon_label:'Іконка',tag_label:'Тег',model_label:'Модель',desc_label:'Опис',welcome_label:'Привітання',prompt_label:'Системний промпт',order_label:'Порядок',or_try:'або спробуйте:',start_btn:'Запустити асистента'},
+ru:{login_subtitle:'AI-ассистенты для вашего бизнеса',password:'Пароль',login_btn:'Войти',admin_btn:'Админ',logout_btn:'Выйти',save_btn:'Сохранить',assistants_title:'Ваши AI-ассистенты',assistants_subtitle:'Выберите ассистента для решения бизнес-задач',admin_title:'Управление ассистентами',add_btn:'Добавить',delete_title:'Удалить ассистента?',delete_desc:'Это действие нельзя отменить',cancel_btn:'Отмена',delete_btn:'Удалить',back_btn:'Назад',clear_chat:'Очистить',chat_placeholder:'Напишите сообщение...',no_api_key:'API ключ не настроен. Обратитесь к администратору.',error_msg:'Ошибка. Проверьте API ключ или попробуйте снова.',no_reply:'Нет ответа.',login_error:'Неверный email или пароль',fill_fields:'Введите email и пароль',saved:'Сохранено',error:'Ошибка',edit_btn:'Редактировать',name_label:'Название',icon_label:'Иконка',tag_label:'Тег',model_label:'Модель',desc_label:'Описание',welcome_label:'Приветствие',prompt_label:'Системный промпт',order_label:'Порядок',or_try:'или попробуйте:',start_btn:'Запустить ассистента'},
+en:{login_subtitle:'AI assistants for your business',password:'Password',login_btn:'Sign In',admin_btn:'Admin',logout_btn:'Sign Out',save_btn:'Save',assistants_title:'Your AI Assistants',assistants_subtitle:'Choose an assistant to solve business tasks',admin_title:'Manage Assistants',add_btn:'Add',delete_title:'Delete assistant?',delete_desc:'This action cannot be undone',cancel_btn:'Cancel',delete_btn:'Delete',back_btn:'Back',clear_chat:'Clear',chat_placeholder:'Type a message...',no_api_key:'API key not configured. Contact administrator.',error_msg:'Error. Check API key or try again.',no_reply:'No response.',login_error:'Invalid email or password',fill_fields:'Enter email and password',saved:'Saved',error:'Error',edit_btn:'Edit',name_label:'Name',icon_label:'Icon',tag_label:'Tag',model_label:'Model',desc_label:'Description',welcome_label:'Welcome',prompt_label:'System prompt',order_label:'Order',or_try:'or try:',start_btn:'Start Assistant'}
 };
 let currentLang='uk';
 function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||I18N.uk[key]||key}
@@ -621,7 +623,7 @@ en:{clipboard:['Assign a task to manager','Write a directive','Delegate a task']
 function getQuickPrompts(icon){return(QUICK_PROMPTS[currentLang]&&QUICK_PROMPTS[currentLang][icon])||QUICK_PROMPTS.uk[icon]||['Допоможи мені','Що ти вмієш?','Почнемо']}
 
 // ===== CHAT =====
-function openChat(id){
+function openChat(id,pushHistory=true){
 currentAssistant=assistantsData.find(a=>a.id===id);if(!currentAssistant)return;
 document.getElementById('assistants-view').style.display='none';
 document.getElementById('admin-view').classList.remove('active');
@@ -634,6 +636,7 @@ if(!chatHistory[id]||!chatHistory[id].length){
 renderWelcome(m);
 }else{chatHistory[id].forEach(msg=>appendMessage(msg.role,msg.content,false));scrollToBottom()}
 document.getElementById('chat-input').focus();
+if(pushHistory) history.pushState({chatId:id},'','#chat');
 }
 function renderWelcome(container){
 if(!currentAssistant)return;
@@ -669,7 +672,23 @@ _startAssistantRunning=false;
 })();
 };
 window.quickSend=function(btn){document.getElementById('chat-input').value=btn.textContent;sendMessage()};
-function closeChat(){document.getElementById('chat-view').classList.remove('active');document.getElementById('assistants-view').style.display='';currentAssistant=null}
+let _closingByBtn = false;
+function closeChat(){
+_closingByBtn = true;
+document.getElementById('chat-view').classList.remove('active');
+document.getElementById('assistants-view').style.display='';
+currentAssistant=null;
+if(history.state&&history.state.chatId) history.back();
+setTimeout(()=>{ _closingByBtn=false; }, 100);
+}
+window.addEventListener('popstate',()=>{
+if(_closingByBtn) return;
+if(document.getElementById('chat-view').classList.contains('active')){
+document.getElementById('chat-view').classList.remove('active');
+document.getElementById('assistants-view').style.display='';
+currentAssistant=null;
+}
+});
 document.getElementById('chat-back').addEventListener('click',closeChat);
 document.getElementById('chat-clear').addEventListener('click',()=>{
 if(!currentAssistant)return;
