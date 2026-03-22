@@ -143,7 +143,10 @@ exports.chat = onRequest(
  */
 exports.transcribe = onRequest(
   {
-    cors: true,
+    cors: {
+      origin: true, // allow all origins (same as cors: true)
+      allowedHeaders: ["content-type", "x-id-token", "x-lang"],
+    },
     region: "europe-west1",
     memory: "256MiB",
     timeoutSeconds: 60,
@@ -182,7 +185,9 @@ exports.transcribe = onRequest(
       }
 
       const lang = req.headers["x-lang"] || "uk"; // default Ukrainian
-      const mimeType = req.headers["content-type"] || "audio/webm";
+      const rawMime = req.headers["content-type"] || "audio/webm";
+      // Strip codec params: "audio/webm;codecs=opus" → "audio/webm"
+      const mimeType = rawMime.split(";")[0].trim();
       const ext = mimeType.includes("ogg") ? "ogg" : "webm";
 
       // ── 4. Build multipart form for Whisper ──

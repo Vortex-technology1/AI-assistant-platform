@@ -226,7 +226,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg-main);color:var(
 .message.assistant .message-bubble{border-bottom-left-radius:3px}
 .chat-input-area{padding:8px 0;padding-bottom:calc(8px + var(--safe-bottom));gap:6px}
 .chat-input-area textarea{padding:10px 12px;border-radius:10px;min-height:40px;font-size:16px}
-.chat-send-btn{width:40px;height:40px;border-radius:10px}
+.chat-send-btn{width:40px;height:40px;border-radius:10px}.chat-mic-btn{width:40px;height:40px;border-radius:10px}
 .start-btn{padding:12px 24px;font-size:14px;border-radius:10px}
 .admin-view{padding:14px 12px;padding-bottom:calc(14px + var(--safe-bottom))}
 .admin-item{padding:14px;border-radius:10px}
@@ -577,8 +577,10 @@ container.innerHTML=`<div class="chat-welcome">
 <button class="start-btn" onclick="startAssistant()">${t('start_btn')}</button>
 </div>`;
 }
+let _startAssistantRunning=false;
 window.startAssistant=function(){
-if(!currentAssistant)return;
+if(!currentAssistant||_startAssistantRunning)return;
+_startAssistantRunning=true;
 const startMsg=currentAssistant.welcome||'Почни роботу';
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
 chatHistory[currentAssistant.id].push({role:'user',content:startMsg});
@@ -595,6 +597,7 @@ const reply=data.reply||t('no_reply');
 chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
 }catch(e){showTyping(false);chatHistory[currentAssistant.id].pop();appendMessage('assistant',t('error_msg'));console.error(e)}
 document.getElementById('chat-send').disabled=false;
+_startAssistantRunning=false;
 })();
 };
 window.quickSend=function(btn){document.getElementById('chat-input').value=btn.textContent;sendMessage()};
@@ -623,8 +626,10 @@ function escapeHtml(t){const d=document.createElement('div');d.textContent=t;ret
 function scrollToBottom(){const e=document.getElementById('chat-messages');e.scrollTop=e.scrollHeight}
 function showTyping(s){const e=document.getElementById('typing-indicator');e.classList.toggle('active',s);if(s)scrollToBottom()}
 
+let _sendRunning=false;
 async function sendMessage(){
-const input=document.getElementById('chat-input'),text=input.value.trim();if(!text||!currentAssistant)return;
+const input=document.getElementById('chat-input'),text=input.value.trim();if(!text||!currentAssistant||_sendRunning)return;
+_sendRunning=true;
 input.value='';input.style.height='auto';appendMessage('user',text);
 if(!chatHistory[currentAssistant.id])chatHistory[currentAssistant.id]=[];
 chatHistory[currentAssistant.id].push({role:'user',content:text});
@@ -637,7 +642,7 @@ const data=await r.json();
 const reply=data.reply||t('no_reply');
 chatHistory[currentAssistant.id].push({role:'assistant',content:reply});showTyping(false);appendMessage('assistant',reply);
 }catch(e){showTyping(false);chatHistory[currentAssistant.id].pop();appendMessage('assistant',t('error_msg'));console.error(e)}
-document.getElementById('chat-send').disabled=false;input.focus();
+_sendRunning=false;document.getElementById('chat-send').disabled=false;input.focus();
 }
 document.getElementById('chat-send').addEventListener('click',sendMessage);
 document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
@@ -659,6 +664,9 @@ document.getElementById('chat-input').addEventListener('input',function(){this.s
     return '';
   }
 
+  let recordingTimer = null;
+  const MAX_RECORD_SEC = 60; // Whisper limit
+
   async function startRecording(){
     try{
       const stream = await navigator.mediaDevices.getUserMedia({audio:true});
@@ -668,12 +676,17 @@ document.getElementById('chat-input').addEventListener('input',function(){this.s
       audioChunks = [];
 
       mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
-      mediaRecorder.onstop = () => { stream.getTracks().forEach(t=>t.stop()); sendToWhisper(); };
+      mediaRecorder.onstop = () => { stream.getTracks().forEach(t=>t.stop()); clearTimeout(recordingTimer); sendToWhisper(); };
 
-      mediaRecorder.start(250); // collect chunks every 250ms
+      mediaRecorder.start(250);
       isRecording = true;
       micBtn.classList.add('recording');
       micBtn.title = 'Зупинити запис';
+
+      // Auto-stop after MAX_RECORD_SEC
+      recordingTimer = setTimeout(() => {
+        if(isRecording) stopRecording();
+      }, MAX_RECORD_SEC * 1000);
     } catch(err){
       console.error('Mic error:', err);
       if(err.name==='NotAllowedError'){
@@ -688,6 +701,7 @@ document.getElementById('chat-input').addEventListener('input',function(){this.s
     if(mediaRecorder && isRecording){
       mediaRecorder.stop();
       isRecording = false;
+      micBtn.disabled = true;
       micBtn.classList.remove('recording');
       micBtn.classList.add('processing');
       micBtn.title = 'Обробка...';
@@ -700,6 +714,10 @@ document.getElementById('chat-input').addEventListener('input',function(){this.s
     const mimeType = getMimeType() || 'audio/webm';
     const blob = new Blob(audioChunks, {type: mimeType});
     if(blob.size < 1000){ resetMic(); return; } // too short / empty
+    if(blob.size > 9 * 1024 * 1024){ // 9MB limit (Whisper max ~25MB, Firebase ~10MB)
+      alert('Запис занадто довгий. Спробуйте коротший (до 60 секунд).');
+      resetMic(); return;
+    }
 
     try{
       const user = firebase.auth().currentUser;
